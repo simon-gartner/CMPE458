@@ -52,6 +52,9 @@ void print_token(Token token) {
         case TOKEN_IDENTIFIER:
             printf("IDENTIFIER");
             break;
+        case TOKEN_COMMENT:
+            printf("COMMENT");
+            break;
         case TOKEN_EOF:
             printf("EOF");
             break;
@@ -99,7 +102,54 @@ Token get_next_token(const char *input, int *pos) {
 
     c = input[*pos];
 
-    // TODO: Add comment handling here
+    // Comment handling here
+    if (c == '/') {
+        int i = 0;
+        // Single line comment checking
+        if (input[*pos+1] == '/'){
+            token.lexeme[i++] = c;
+            (*pos)++;
+            c = input[*pos];
+            // Scan until newline
+            while ( c != '\n') {
+                if (c == '\0') {
+                    break;
+                }
+                token.lexeme[i++] = c;
+                (*pos)++;
+                c = input[*pos];
+            }
+            token.lexeme[i] = '\0';
+            token.type = TOKEN_COMMENT;
+            return token;
+        }
+        // Multi line comment checking
+        if (input[*pos+1] == '*'){
+            token.lexeme[i++] = c;
+            (*pos)++;
+            c = input[*pos];
+            char d = input[*pos+1];
+            // Scan until */ is found
+            while (c != '*' || d != '/') {
+                token.lexeme[i++] = c;
+                (*pos)++;
+                c = input[*pos];
+                d = input[*pos+1];
+            }
+            // add closing comment to token
+            token.lexeme[i++] = c;
+            (*pos)++;
+            c = input[*pos];
+            token.lexeme[i] = '\0';
+            token.lexeme[i++] = c;
+            (*pos)++;
+            c = input[*pos];
+            token.lexeme[i] = '\0';
+            token.type = TOKEN_COMMENT;
+            return token;
+        }
+
+    }
 
     // Handle numbers
     if (isdigit(c)) {

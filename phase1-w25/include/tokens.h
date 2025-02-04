@@ -20,6 +20,7 @@ typedef enum {
     TOKEN_OPERATOR,   // e.g., "+", "-"
     TOKEN_KEYWORD,    //e.g, "if", "repeat", "until", "while", "for"
     TOKEN_IDENTIFIER,
+    TOKEN_COMMENT,
     TOKEN_ERROR
 } TokenType;
 
