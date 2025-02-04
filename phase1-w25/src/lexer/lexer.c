@@ -171,15 +171,32 @@ Token get_next_token(const char *input, int *pos) {
 
 // This is a basic lexer that handles numbers (e.g., "123", "456"), basic operators (+ and -), consecutive operator errors, whitespace and newlines, with simple line tracking for error reporting.
 
-int main() {
-    char *input = NULL;
-    size_t input_size = 0;
-
-    size_t read_size = getline(&input, &input_size, stdin);
-    if (read_size == -1) {
-        fprintf(stderr, "Error reading input\n");
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <input_file>\n", argv[0]);
         return 1;
     }
+
+    FILE *file = fopen(argv[1], "r");
+    if (!file) {
+        fprintf(stderr, "Error opening file: %s\n", argv[1]);
+        return 1;
+    }
+
+    fseek(file, 0, SEEK_END);
+    size_t input_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    char *input = malloc(input_size + 1);
+    if (!input) {
+        fprintf(stderr, "Memory allocation error\n");
+        fclose(file);
+        return 1;
+    }
+
+    fread(input, 1, input_size, file);
+    input[input_size] = '\0';
+    fclose(file);
 
     int position = 0;
     Token token;
@@ -188,8 +205,6 @@ int main() {
 
     do {
         token = get_next_token(input, &position);
-        printf("Token: %d | Lexeme: '%s' | Position: %d\n", token.type, token.lexeme, position);
-
         print_token(token);
     } while (token.type != TOKEN_EOF);
 
