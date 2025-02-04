@@ -172,17 +172,27 @@ Token get_next_token(const char *input, int *pos) {
 // This is a basic lexer that handles numbers (e.g., "123", "456"), basic operators (+ and -), consecutive operator errors, whitespace and newlines, with simple line tracking for error reporting.
 
 int main() {
-    //const char *input = "123 + 456 - 789\n1 ++ 2"; // Test with multi-line input
-    const char *input = "123 + 123\n abc_123 = 1\n if(abc_123 < 2){printf('test')}"; // Test with multi-line input
+    char *input = NULL;
+    size_t input_size = 0;
+
+    size_t read_size = getline(&input, &input_size, stdin);
+    if (read_size == -1) {
+        fprintf(stderr, "Error reading input\n");
+        return 1;
+    }
+
     int position = 0;
     Token token;
 
-    printf("Analyzing input:\n%s\n\n", input);
+    printf("Analyzing: \n%s\n\n", input);
 
     do {
         token = get_next_token(input, &position);
+        printf("Token: %d | Lexeme: '%s' | Position: %d\n", token.type, token.lexeme, position);
+
         print_token(token);
     } while (token.type != TOKEN_EOF);
 
+    free(input);
     return 0;
 }

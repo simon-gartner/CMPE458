@@ -1,7 +1,7 @@
 OS := $(shell uname 2>/dev/null || echo Windows)
 
 CC = gcc
-CFLAGS = -Iphase1-w25/include -Wall -Wextra -std=c11
+CFLAGS = -Iphase1-w25/include -Wall -Wextra
 SRC := $(shell find phase1-w25/src -type f -name "*.c")
 OBJ := $(patsubst phase1-w25/src/%.c, build/%.o, $(SRC))
 EXEC = build/compiler
