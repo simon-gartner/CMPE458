@@ -103,7 +103,7 @@ Token get_next_token(const char *input, int *pos) {
 
     // Handle numbers
     if (isdigit(c)) {
-        int i = 0;
+        size_t i = 0;
         do {
             token.lexeme[i++] = c;
             (*pos)++;
@@ -118,7 +118,7 @@ Token get_next_token(const char *input, int *pos) {
     // TODO: Add keyword and identifier handling here
     // Hint: You'll have to add support for keywords and identifiers, and then string literals
     if (isalpha(c)){
-        int i = 0;
+        size_t i = 0;
 
         // Grab entirety of token
         while (( (isalpha(c) || isalnum(c) || c == '_') && i < sizeof(token.lexeme) - 1)) {
