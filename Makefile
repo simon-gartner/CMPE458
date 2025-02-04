@@ -4,7 +4,7 @@ CC = gcc
 CFLAGS = -Iphase1-w25/include -Wall -Wextra -std=c11
 SRC := $(shell find phase1-w25/src -type f -name "*.c")
 OBJ := $(patsubst phase1-w25/src/%.c, build/%.o, $(SRC))
-EXEC = build/compilerma
+EXEC = build/compiler
 
 ifeq ($(OS), Windows)
     EXEC := build/lexer.exe
