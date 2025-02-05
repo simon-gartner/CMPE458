@@ -18,9 +18,10 @@ typedef enum {
     TOKEN_EOF,
     TOKEN_NUMBER,     // e.g., "123", "456"
     TOKEN_OPERATOR,   // e.g., "+", "-"
-    TOKEN_KEYWORD,    //e.g, "if", "repeat", "until", "while", "for"
+    TOKEN_KEYWORD,    // e.g, "if", "repeat", "until", "while", "for"
     TOKEN_IDENTIFIER,
     TOKEN_COMMENT,
+    TOKEN_STRING,
     TOKEN_ERROR
 } TokenType;
 

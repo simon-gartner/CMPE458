@@ -58,6 +58,9 @@ void print_token(Token token) {
         case TOKEN_EOF:
             printf("EOF");
             break;
+        case TOKEN_STRING:
+            printf("STRING");
+            break;
         default:
             printf("UNKNOWN");
     }
@@ -67,7 +70,7 @@ void print_token(Token token) {
 
 
 // List of keywords
-const char *keywords[] = {"if", "for", "do", "while", "int", "return", "repeat", "until", "float"};
+const char *keywords[] = {"if", "for", "do", "while", "int", "return", "repeat", "until", "float", "string"};
 const int num_keywords = sizeof(keywords) / sizeof(keywords[0]);
 
 // Function to check if a string is a keyword
@@ -188,8 +191,21 @@ Token get_next_token(const char *input, int *pos) {
         return token;
     }
 
+    // Handle string literals
+    if (c == '"') {
+        size_t i = 0;
+        (*pos)++; // Skip the opening '"' 
 
-    // TODO: Add string literal handling here
+        while (input[*pos] != '"' && input[*pos] != '\0') {
+            token.lexeme[i++] = input[(*pos)++];
+        } 
+
+        if (input[*pos] == '"') (*pos)++;
+        
+        token.lexeme[i] = '\0';
+        token.type = TOKEN_STRING;
+        return token;
+    }
 
     // Handle operators
     if (c == '+' || c == '-') {
