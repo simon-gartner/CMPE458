@@ -6,14 +6,6 @@
 #ifndef TOKENS_H
 #define TOKENS_H
 
-/* Token types that need to be recognized by the lexer
- * TODO: Add more token types as per requirements:
- * - Keywords or reserved words (if, repeat, until)
- * - Identifiers
- * - String literals
- * - More operators
- * - Delimiters
- */
 typedef enum {
     TOKEN_EOF,
     TOKEN_NUMBER,     // e.g., "123", "456"
@@ -22,6 +14,7 @@ typedef enum {
     TOKEN_IDENTIFIER,
     TOKEN_COMMENT,
     TOKEN_STRING,
+    TOKEN_DELIMITER,
     TOKEN_ERROR
 } TokenType;
 

@@ -61,6 +61,9 @@ void print_token(Token token) {
         case TOKEN_STRING:
             printf("STRING");
             break;
+        case TOKEN_DELIMITER:
+            printf("DELIMITER");
+            break;
         default:
             printf("UNKNOWN");
     }
@@ -226,6 +229,14 @@ Token get_next_token(const char *input, int *pos) {
     }
 
     // TODO: Add delimiter handling here
+    if (c == ';') {
+        token.type = TOKEN_DELIMITER;
+        token.lexeme[0] = c;
+        token.lexeme[1] = '\0';
+        last_token_type = 'd';
+        (*pos)++;
+        return token;
+    }
 
     // Handle invalid characters
     token.error = ERROR_INVALID_CHAR;
