@@ -211,20 +211,19 @@ Token get_next_token(const char *input, int *pos) {
     }
 
     // Handle operators
-    if (c == '+' || c == '-') {
-        if (last_token_type == 'o') {
-            // Check for consecutive operators
-            token.error = ERROR_CONSECUTIVE_OPERATORS;
-            token.lexeme[0] = c;
-            token.lexeme[1] = '\0';
-            (*pos)++;
-            return token;
-        }
-        token.type = TOKEN_OPERATOR;
+    if (c == '+' || c == '-' || c == '*' || c == '/' || c == '=' ||  c == '<' || c == '>' || c == '!') {
         token.lexeme[0] = c;
         token.lexeme[1] = '\0';
-        last_token_type = 'o';
         (*pos)++;
+
+        if (input[*pos] == '=' && (c == '=' || c == '!' || c == '<' || c == '>')) {
+            token.lexeme[1] = '=';
+            token.lexeme[2] = '\0';
+            (*pos)++;
+        }
+
+        token.type = TOKEN_OPERATOR;
+        last_token_type = 'o';
         return token;
     }
 
