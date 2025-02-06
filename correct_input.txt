@@ -1,0 +1,6 @@
+123 + 456 - 789;
+int x = 42;
+y = x + 10;
+if (a == b){
+    printf("HELLO WORLD")
+}
