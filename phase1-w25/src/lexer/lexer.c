@@ -110,49 +110,38 @@ Token get_next_token(const char *input, int *pos) {
 
     // Comment handling here
     if (c == '/') {
-        int i = 0;
         // Single line comment checking
         if (input[*pos+1] == '/'){
-            token.lexeme[i++] = c;
             (*pos)++;
             c = input[*pos];
             // Scan until newline
             while ( c != '\n') {
                 if (c == '\0') {
+                    (*pos)++;
+                    c = input[*pos];
                     break;
                 }
-                token.lexeme[i++] = c;
                 (*pos)++;
                 c = input[*pos];
             }
-            token.lexeme[i] = '\0';
-            token.type = TOKEN_COMMENT;
-            return token;
+            (*pos)++;
+            c = input[*pos];
         }
         // Multi line comment checking
         if (input[*pos+1] == '*'){
-            token.lexeme[i++] = c;
             (*pos)++;
             c = input[*pos];
             char d = input[*pos+1];
             // Scan until */ is found
             while (c != '*' || d != '/') {
-                token.lexeme[i++] = c;
                 (*pos)++;
                 c = input[*pos];
                 d = input[*pos+1];
             }
-            // add closing comment to token
-            token.lexeme[i++] = c;
             (*pos)++;
             c = input[*pos];
-            token.lexeme[i] = '\0';
-            token.lexeme[i++] = c;
             (*pos)++;
             c = input[*pos];
-            token.lexeme[i] = '\0';
-            token.type = TOKEN_COMMENT;
-            return token;
         }
 
     }
@@ -201,6 +190,10 @@ Token get_next_token(const char *input, int *pos) {
 
         while (input[*pos] != '"' && input[*pos] != '\0') {
             token.lexeme[i++] = input[(*pos)++];
+            if (size_t >= 247){
+                token.error = ERROR_TOO_LONG;
+                break;
+            }
         } 
 
         if (input[*pos] == '"') (*pos)++;
@@ -218,6 +211,12 @@ Token get_next_token(const char *input, int *pos) {
 
         if (input[*pos] == '=' && (c == '=' || c == '!' || c == '<' || c == '>')) {
             token.lexeme[1] = '=';
+            token.lexeme[2] = '\0';
+            (*pos)++;
+        }
+
+        if (input[*pos] == '+' && (c == '+' || c == '=')) {
+            token.lexeme[1] = '+';
             token.lexeme[2] = '\0';
             (*pos)++;
         }

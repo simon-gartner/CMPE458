@@ -1,7 +1,6 @@
 1 + 1 = 2;
 a = b;
 
-/*This is a multi
- line comment */
-
+c++;
 //this is a comment
+d = e;
