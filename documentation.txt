@@ -1,0 +1,28 @@
+How to test:
+1. Run: make
+2. Run: ./build/compiler input.txt
+3. Run: ./build/compiler incorrect_input.txt
+
+Modifications made:
+Instead of hardcoding the test cases as strings, the design of the analyzer was made so that a .txt file can be passed in.
+This is to make it easier to design robust test cases that cover all of the needs of our program.
+
+List of changes made:
+Added handling for deletion of single-line comments and multi-line comments.
+Added handling of keywords and identifiers.
+Added handling of string literals.
+Added handling of additional operators inluding comparison operators (ex. >,<,>=) and aditional aritmetic operators (++, *, /).
+Added handling of delimeters.
+Added handling of grammatical elements.
+
+New tokens, grammar rules, or semantic operations added:
+Added the followoiing token types: 
+    TOKEN_KEYWORD,
+    TOKEN_IDENTIFIER,
+    TOKEN_COMMENT,
+    TOKEN_STRING,
+    TOKEN_DELIMITER,
+    TOKEN_GRAMMAR
+
+New error signals or handling mechanisms:
+The new errors added are ERROR_TOO_LONG, which occurs when a string is made that is over 247 characters long.

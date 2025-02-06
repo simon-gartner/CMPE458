@@ -1,0 +1,4 @@
+123 ++ 456
+x@ = 10
+123 +- 456
+"Unterminated string    // Error case

@@ -64,6 +64,9 @@ void print_token(Token token) {
         case TOKEN_DELIMITER:
             printf("DELIMITER");
             break;
+        case TOKEN_GRAMMAR:
+            printf("GRAMMAR");
+            break;
         default:
             printf("UNKNOWN");
     }
@@ -107,9 +110,9 @@ Token get_next_token(const char *input, int *pos) {
     }
 
     c = input[*pos];
-
     // Comment handling here
     if (c == '/') {
+        printf("%c, %c \n" c, input[*pos+1]);
         // Single line comment checking
         if (input[*pos+1] == '/'){
             (*pos)++;
@@ -123,11 +126,14 @@ Token get_next_token(const char *input, int *pos) {
                 }
                 (*pos)++;
                 c = input[*pos];
+                (*pos)++;
             }
             (*pos)++;
             c = input[*pos];
+            current_line++;
         }
         // Multi line comment checking
+        printf("%c, %c \n" c, input[*pos+1]);
         if (input[*pos+1] == '*'){
             (*pos)++;
             c = input[*pos];
@@ -137,11 +143,15 @@ Token get_next_token(const char *input, int *pos) {
                 (*pos)++;
                 c = input[*pos];
                 d = input[*pos+1];
+                if (c == '\n') {
+                    current_line++;
+                }
             }
             (*pos)++;
             c = input[*pos];
             (*pos)++;
             c = input[*pos];
+            (*pos)++;
         }
 
     }
@@ -160,8 +170,7 @@ Token get_next_token(const char *input, int *pos) {
         return token;
     }
 
-    // TODO: Add keyword and identifier handling here
-    // Hint: You'll have to add support for keywords and identifiers, and then string literals
+    // Keyword and identifier handling here
     if (isalpha(c)){
         size_t i = 0;
 
@@ -190,7 +199,7 @@ Token get_next_token(const char *input, int *pos) {
 
         while (input[*pos] != '"' && input[*pos] != '\0') {
             token.lexeme[i++] = input[(*pos)++];
-            if (size_t >= 247){
+            if (i >= 247){
                 token.error = ERROR_TOO_LONG;
                 break;
             }
@@ -209,13 +218,25 @@ Token get_next_token(const char *input, int *pos) {
         token.lexeme[1] = '\0';
         (*pos)++;
 
-        if (input[*pos] == '=' && (c == '=' || c == '!' || c == '<' || c == '>')) {
+        if (input[*pos] == '=' && (c == '=' || c == '!' || c == '<' || c == '>' || c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '&' || c == '|')) {
             token.lexeme[1] = '=';
             token.lexeme[2] = '\0';
             (*pos)++;
         }
 
-        if (input[*pos] == '+' && (c == '+' || c == '=')) {
+        if (input[*pos] == '&' && (c == '&')) {
+            token.lexeme[1] = '&';
+            token.lexeme[2] = '\0';
+            (*pos)++;
+        }
+
+        if (input[*pos] == '|' && (c == '|')) {
+            token.lexeme[1] = '|';
+            token.lexeme[2] = '\0';
+            (*pos)++;
+        }
+
+        if (input[*pos] == '+' && (c == '+')) {
             token.lexeme[1] = '+';
             token.lexeme[2] = '\0';
             (*pos)++;
@@ -226,9 +247,19 @@ Token get_next_token(const char *input, int *pos) {
         return token;
     }
 
-    // TODO: Add delimiter handling here
+    // Delimiter handling here
     if (c == ';') {
         token.type = TOKEN_DELIMITER;
+        token.lexeme[0] = c;
+        token.lexeme[1] = '\0';
+        last_token_type = 'd';
+        (*pos)++;
+        return token;
+    }
+
+    // Grammar handling
+    if (c == '{' || c == '}' || c == '(' || c == ')' || c == '[' || c == ']' || c == ',') {
+        token.type = TOKEN_GRAMMAR;
         token.lexeme[0] = c;
         token.lexeme[1] = '\0';
         last_token_type = 'd';
