@@ -6,6 +6,8 @@
 #ifndef TOKENS_H
 #define TOKENS_H
 
+#define MAX_LEXEME_LEN 100
+
 typedef enum {
     TOKEN_EOF,
     TOKEN_NUMBER,     // e.g., "123", "456"
@@ -36,9 +38,14 @@ typedef enum {
  */
 typedef struct {
     TokenType type;
-    char lexeme[100];   // Actual text of the token
+    char lexeme[MAX_LEXEME_LEN];   // Actual text of the token
     int line;           // Line number in source file
     ErrorType error;    // Error type if any
 } Token;
+
+const char* tokenToString(TokenType type);
+void print_token(Token token);
+void print_error(ErrorType error, int line, const char *lexeme);
+
 
 #endif /* TOKENS_H */

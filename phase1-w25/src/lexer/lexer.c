@@ -9,6 +9,30 @@
 static int current_line = 1;
 static char last_token_type = 'x'; // For checking consecutive operators
 
+void print_token(Token token) {
+    if (token.error != ERROR_NONE) {
+        print_error(token.error, token.line, token.lexeme);
+        return;
+    }
+    printf("Token: %-10s | Lexeme: %-3s | Line: %d\n", tokenToString(token.type), token.lexeme, token.line);
+}
+
+const char* tokenToString(TokenType type) {
+    switch (type) {
+        case TOKEN_NUMBER:     return "NUMBER";
+        case TOKEN_OPERATOR:   return "OPERATOR";
+        case TOKEN_KEYWORD:    return "KEYWORD";
+        case TOKEN_IDENTIFIER: return "IDENTIFIER";
+        case TOKEN_COMMENT:    return "COMMENT";
+        case TOKEN_EOF:        return "EOF";
+        case TOKEN_STRING:     return "STRING";
+        case TOKEN_DELIMITER:  return "DELIMITER";
+        default:               return "UNKNOWN";
+    }
+}
+
+
+
 /* Print error messages for lexical errors */
 void print_error(ErrorType error, int line, const char *lexeme) {
     printf("Lexical Error at line %d: ", line);
@@ -26,51 +50,6 @@ void print_error(ErrorType error, int line, const char *lexeme) {
             printf("Unknown error\n");
     }
 }
-
-/* Print token information
- *
- *  TODO Update your printing function accordingly
- */
-
-void print_token(Token token) {
-    if (token.error != ERROR_NONE) {
-        print_error(token.error, token.line, token.lexeme);
-        return;
-    }
-
-    printf("Token: ");
-    switch (token.type) {
-        case TOKEN_NUMBER:
-            printf("NUMBER");
-            break;
-        case TOKEN_OPERATOR:
-            printf("OPERATOR");
-            break;
-        case TOKEN_KEYWORD:
-            printf("KEYWORD");
-            break;
-        case TOKEN_IDENTIFIER:
-            printf("IDENTIFIER");
-            break;
-        case TOKEN_COMMENT:
-            printf("COMMENT");
-            break;
-        case TOKEN_EOF:
-            printf("EOF");
-            break;
-        case TOKEN_STRING:
-            printf("STRING");
-            break;
-        case TOKEN_DELIMITER:
-            printf("DELIMITER");
-            break;
-        default:
-            printf("UNKNOWN");
-    }
-    printf(" | Lexeme: '%s' | Line: %d\n",
-           token.lexeme, token.line);
-}
-
 
 // List of keywords
 const char *keywords[] = {"if", "for", "do", "while", "int", "return", "repeat", "until", "float", "string"};
@@ -190,7 +169,7 @@ Token get_next_token(const char *input, int *pos) {
 
         while (input[*pos] != '"' && input[*pos] != '\0') {
             token.lexeme[i++] = input[(*pos)++];
-            if (size_t >= 247){
+            if (i >= 247){
                 token.error = ERROR_TOO_LONG;
                 break;
             }
