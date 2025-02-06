@@ -14,7 +14,7 @@ void print_token(Token token) {
         print_error(token.error, token.line, token.lexeme);
         return;
     }
-    printf("Token: %-10s | Lexeme: %-3s | Line: %d\n", tokenToString(token.type), token.lexeme, token.line);
+    printf("Token: %-10s | Lexeme: %-15s | Line: %d\n", tokenToString(token.type), token.lexeme, token.line);
 }
 
 const char* tokenToString(TokenType type) {
@@ -27,6 +27,7 @@ const char* tokenToString(TokenType type) {
         case TOKEN_EOF:        return "EOF";
         case TOKEN_STRING:     return "STRING";
         case TOKEN_DELIMITER:  return "DELIMITER";
+        case TOKEN_GRAMMAR:    return "PUNC";
         default:               return "UNKNOWN";
     }
 }
@@ -164,7 +165,14 @@ Token get_next_token(const char *input, int *pos) {
         (*pos)++; // Skip the opening '"' 
 
         while (input[*pos] != '"' && input[*pos] != '\0') {
-            token.lexeme[i++] = input[(*pos)++];
+            if (input[*pos] == '\\' && input[*pos+1] == '"') {
+                token.lexeme[i++] = '"';
+                (*pos) += 2;
+            } else {
+                token.lexeme[i++] = input[*pos];
+                (*pos)++;
+            }
+
             if (i >= 247){
                 token.error = ERROR_TOO_LONG;
                 break;
