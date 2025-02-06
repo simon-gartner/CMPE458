@@ -86,51 +86,41 @@ Token get_next_token(const char *input, int *pos) {
     }
 
     c = input[*pos];
-    // Comment handling here
+
+    // Comment handling
     if (c == '/') {
-        printf("%c, %c \n" c, input[*pos+1]);
-        // Single line comment checking
-        if (input[*pos+1] == '/'){
-            (*pos)++;
-            c = input[*pos];
-            // Scan until newline
-            while ( c != '\n') {
-                if (c == '\0') {
-                    (*pos)++;
-                    c = input[*pos];
-                    break;
-                }
-                (*pos)++;
-                c = input[*pos];
+        // Single line comment
+        if (input[*pos + 1] == '/') {
+            (*pos) += 2;
+
+            while (input[*pos] != '\n' && input[*pos] != '\0') (*pos)++;
+
+            if (input[*pos] == '\n') {
+                current_line++;
                 (*pos)++;
             }
-            (*pos)++;
-            c = input[*pos];
-            current_line++;
-        }
-        // Multi line comment checking
-        printf("%c, %c \n" c, input[*pos+1]);
-        if (input[*pos+1] == '*'){
-            (*pos)++;
-            c = input[*pos];
-            char d = input[*pos+1];
-            // Scan until */ is found
-            while (c != '*' || d != '/') {
-                (*pos)++;
-                c = input[*pos];
-                d = input[*pos+1];
-                if (c == '\n') {
-                    current_line++;
-                }
-            }
-            (*pos)++;
-            c = input[*pos];
-            (*pos)++;
-            c = input[*pos];
-            (*pos)++;
+            return get_next_token(input, pos);
         }
 
+        // Multiline comment
+        else if (input[*pos + 1] == '*') {
+            (*pos) += 2;
+            char d = input[*pos];
+        
+            while (!(c == '*' && d == '/') && c != '\0') {
+                if (c == '\n') current_line++;
+
+                (*pos)++;
+                c = input[*pos];
+                d = input[*pos + 1];
+            }
+
+        if (c == '*' && d == '/') (*pos) += 2;
+
+        return get_next_token(input, pos); 
+        }
     }
+    
 
     // Handle numbers
     if (isdigit(c)) {
