@@ -17,6 +17,7 @@ typedef enum {
     TOKEN_COMMENT,
     TOKEN_STRING,
     TOKEN_DELIMITER,
+    TOKEN_GRAMMAR,
     TOKEN_ERROR
 } TokenType;
 
@@ -28,7 +29,8 @@ typedef enum {
     ERROR_INVALID_CHAR,
     ERROR_INVALID_NUMBER,
     ERROR_CONSECUTIVE_OPERATORS,
-    ERROR_TOO_LONG
+    ERROR_TOO_LONG,
+    ERROR_EXCEED_NUMERIC_LENGTH
 } ErrorType;
 
 /* Token structure to store token information
