@@ -1,7 +1,4 @@
-How to test:
-1. Run: make
-2. Run: ./build/compiler input.txt
-3. Run: ./build/compiler incorrect_input.txt
+DOCUMENTATION
 
 Modifications made:
 Instead of hardcoding the test cases as strings, the design of the analyzer was made so that a .txt file can be passed in.
@@ -26,3 +23,17 @@ Added the followoiing token types:
 
 New error signals or handling mechanisms:
 The new errors added are ERROR_TOO_LONG, which occurs when a string is made that is over 247 characters long.
+
+TESTING:
+
+How to test:
+1. Run: make
+2. Run: ./build/compiler input.txt
+3. Run: ./build/compiler incorrect_input.txt
+
+These two test cases cover outputs without erros, and outputs with errors.
+It is designed to test each new feature added to the lexer and parse the file properly.
+
+The expected output for the test without errors is:
+
+The expected ouput for the test with errors is:
