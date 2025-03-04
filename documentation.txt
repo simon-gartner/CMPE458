@@ -24,16 +24,43 @@ Added the followoiing token types:
 New error signals or handling mechanisms:
 The new errors added are ERROR_TOO_LONG, which occurs when a string is made that is over 247 characters long.
 
-TESTING:
 
-How to test:
-1. Run: make
-2. Run: ./build/compiler input.txt
-3. Run: ./build/compiler incorrect_input.txt
+> ./build/compiler correct_input.txt
+Analyzing: 
+123 + 456 - 789;
+int x = 42;
+y = x + 10;
+if (a == b){
+    printf("HELLO WORLD")
+}
 
-These two test cases cover outputs without erros, and outputs with errors.
-It is designed to test each new feature added to the lexer and parse the file properly.
-
-The expected output for the test without errors is:
-
-The expected ouput for the test with errors is:
+Token: NUMBER     | Lexeme: 123             | Line: 1
+Token: OPERATOR   | Lexeme: +               | Line: 1
+Token: NUMBER     | Lexeme: 456             | Line: 1
+Token: OPERATOR   | Lexeme: -               | Line: 1
+Token: NUMBER     | Lexeme: 789             | Line: 1
+Token: DELIMITER  | Lexeme: ;               | Line: 1
+Token: KEYWORD    | Lexeme: int             | Line: 1
+Token: IDENTIFIER | Lexeme: x               | Line: 2
+Token: OPERATOR   | Lexeme: =               | Line: 2
+Token: NUMBER     | Lexeme: 42              | Line: 2
+Token: DELIMITER  | Lexeme: ;               | Line: 2
+Token: IDENTIFIER | Lexeme: y               | Line: 2
+Token: OPERATOR   | Lexeme: =               | Line: 3
+Token: IDENTIFIER | Lexeme: x               | Line: 3
+Token: OPERATOR   | Lexeme: +               | Line: 3
+Token: NUMBER     | Lexeme: 10              | Line: 3
+Token: DELIMITER  | Lexeme: ;               | Line: 3
+Token: KEYWORD    | Lexeme: if              | Line: 3
+Token: PUNC       | Lexeme: (               | Line: 4
+Token: IDENTIFIER | Lexeme: a               | Line: 4
+Token: OPERATOR   | Lexeme: ==              | Line: 4
+Token: IDENTIFIER | Lexeme: b               | Line: 4
+Token: PUNC       | Lexeme: )               | Line: 4
+Token: PUNC       | Lexeme: {               | Line: 4
+Token: IDENTIFIER | Lexeme: printf          | Line: 4
+Token: PUNC       | Lexeme: (               | Line: 5
+Token: STRING     | Lexeme: HELLO WORLD     | Line: 5
+Token: PUNC       | Lexeme: )               | Line: 5
+Token: PUNC       | Lexeme: }               | Line: 5
+Token: EOF        | Lexeme: EOF             | Line: 6
