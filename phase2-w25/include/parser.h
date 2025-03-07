@@ -13,6 +13,10 @@ typedef enum {
     AST_NUMBER,         // Number literal
     AST_IDENTIFIER,     // Variable name
     AST_IF,             // If statement 
+    AST_WHILE,          // While statement
+    AST_REPEAT,         // Repeat statement
+    AST_BLOCK,          // Code block?
+    AST_BINOP,          // Binary operator
     // TODO: Add more node types as needed
 } ASTNodeType;
 

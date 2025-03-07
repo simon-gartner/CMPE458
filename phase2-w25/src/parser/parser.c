@@ -7,12 +7,12 @@
 
 
 // TODO 1: Add more parsing function declarations for:
-// - if statements: if (condition) { ... }
-// - while loops: while (condition) { ... }
-// - repeat-until: repeat { ... } until (condition)
-// - print statements: print x;
-// - blocks: { statement1; statement2; }
-// - factorial function: factorial(x)
+ASTNode* parse_if_statement(); // - if statements: if (condition) { ... }
+ASTNode* parse_while_statement(); // - while loops: while (condition) { ... }
+ASTNode* parse_repeat_statement(); // - repeat-until: repeat { ... } until (condition)
+ASTNode* parse_print_statement(); // - print statements: print x;
+ASTNode* parse_block(); // - blocks: { statement1; statement2; }
+ASTNode* parse_factorial(); // - factorial function: factorial(x)
 
 
 // Current token being processed
@@ -103,9 +103,9 @@ static ASTNode *parse_statement(void);
 
 // TODO 3: Add parsing functions for each new statement type
 // DONE static ASTNode* parse_if_statement(void) { ... }
-// static ASTNode* parse_while_statement(void) { ... }
-// static ASTNode* parse_repeat_statement(void) { ... }
-// static ASTNode* parse_print_statement(void) { ... }
+// DONE static ASTNode* parse_while_statement(void) { ... }
+// DONE static ASTNode* parse_repeat_statement(void) { ... }
+// DONE static ASTNode* parse_print_statement(void) { ... }
 // static ASTNode* parse_block(void) { ... }
 // static ASTNode* parse_factorial(void) { ... }
 
@@ -160,29 +160,39 @@ static ASTNode *parse_if_statement(void) {
     ASTNode *node = create_node(AST_IF);
     advance(); // consume 'if'
 
+    // Check for '('
     if (!match(TOKEN_LPAREN)) {
         parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
         exit(1);
     }
-
     advance();
+    
+    // Check for conditional statement
     node->left = parse_expression();
 
+    if (node->left == NULL) {
+        parse_error(PARSE_ERROR_MISSING_CONDITION_STATEMENT, current_token);
+        exit(1);
+    }
+
+    // Check for ')'
     if (!match(TOKEN_RPAREN)) {
         parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
         exit(1);
     }
-
     advance();
 
+    // Check for '{'
     if (!match(TOKEN_LBRACE)) {
         parse_error(PARSE_ERROR_MISSING_BLOCK_BRACES, current_token);
         exit(1);
     }
-
     advance();
+
+    // Parse code block
     node->right = parse_expression();
 
+    // Check for '}'
     if (!match(TOKEN_RBRACE)) {
         parse_error(PARSE_ERROR_MISSING_BLOCK_BRACES, current_token);
         exit(1);
@@ -192,6 +202,127 @@ static ASTNode *parse_if_statement(void) {
     return node;
 }
 
+// Parse while statements: while (condition) { ... }
+static ASTNode *parse_while_statement(void) {
+    ASTNode *node = create_node(AST_WHILE);
+    advance(); // consume 'while'
+
+    // Check for '('
+    if (!match(TOKEN_LPAREN)) {
+        parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
+        exit(1);
+    }
+    advance();
+    
+    // Check for conditional statement
+    node->left = parse_expression();
+
+    if (node->left == NULL) {
+        parse_error(PARSE_ERROR_MISSING_CONDITION_STATEMENT, current_token);
+        exit(1);
+    }
+
+    // Check for ')'
+    if (!match(TOKEN_RPAREN)) {
+        parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
+        exit(1);
+    }
+    advance();
+
+    // Check for '{'
+    if (!match(TOKEN_LBRACE)) {
+        parse_error(PARSE_ERROR_MISSING_BLOCK_BRACES, current_token);
+        exit(1);
+    }
+    advance();
+
+    // Parse code block
+    node->right = parse_expression();
+
+    // Check for '}'
+    if (!match(TOKEN_RBRACE)) {
+        parse_error(PARSE_ERROR_MISSING_BLOCK_BRACES, current_token);
+        exit(1);
+    }
+    
+    advance();
+    return node;
+}
+
+// Parse repeat-until statements: repeat { ... } until (condition)
+static ASTNode *parse_repeat_statement(void) {
+    ASTNode *node = create_node(AST_REPEAT);
+    advance(); // consume 'repeat'
+
+        // Check for '{'
+        if (!match(TOKEN_LBRACE)) {
+            parse_error(PARSE_ERROR_MISSING_BLOCK_BRACES, current_token);
+            exit(1);
+        }
+        advance();
+    
+        // Parse code block
+        node->right = parse_expression();
+
+        // Check for '}'
+        if (!match(TOKEN_RBRACE)) {
+            parse_error(PARSE_ERROR_MISSING_BLOCK_BRACES, current_token);
+            exit(1);
+        }
+        advance();
+
+        // Check for until keyword
+        if (!match(TOKEN_UNTIL)) {
+            parse_error(PARSE_ERROR_INVALID_EXPRESSION, current_token);
+            exit(1);
+        }
+        advance();
+
+        // Check for '('
+        if (!match(TOKEN_LPAREN)) {
+            parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
+            exit(1);
+        }
+        advance();
+
+        // Check for conditional statement
+        node->left = parse_expression();
+
+        if (node->left == NULL) {
+            parse_error(PARSE_ERROR_MISSING_CONDITION_STATEMENT, current_token);
+            exit(1);
+        }
+        
+        // Check for ')'
+        if (!match(TOKEN_RPAREN)) {
+            parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
+            exit(1);
+        }
+        
+        advance();
+        return node;
+}
+
+// Parse print statements: print x
+static ASTNode* parse_print_statement(void) {
+    ASTNode *node = create_node(AST_PRINT);
+    advance(); // consume 'print'
+
+    if (!match(TOKEN_IDENTIFIER)) {
+        parse_error(PARSE_ERROR_MISSING_IDENTIFIER, current_token);
+        exit(1);
+    }
+
+    node->token = current_token;
+    advance();
+
+    if (!match(TOKEN_SEMICOLON)) {
+        parse_error(PARSE_ERROR_MISSING_SEMICOLON, current_token);
+        exit(1);
+    }
+    advance();
+    return node;
+}
 
 // Parse statement
 static ASTNode *parse_statement(void) {
@@ -201,11 +332,17 @@ static ASTNode *parse_statement(void) {
         return parse_assignment();
     } else if (match(TOKEN_IF)) { 
         return parse_if_statement();
+    } else if (match(TOKEN_WHILE)) {
+        return parse_while_statement();
+    } else if (match(TOKEN_REPEAT)) {
+        return parse_repeat_statement();
+    } else if (match(TOKEN_PRINT)) {
+        return parse_print_statement();
     }
     // TODO 4: Add cases for new statement types
     // DONE else if (match(TOKEN_IF)) return parse_if_statement();
-    // else if (match(TOKEN_WHILE)) return parse_while_statement();
-    // else if (match(TOKEN_REPEAT)) return parse_repeat_statement();
+    // DONE else if (match(TOKEN_WHILE)) return parse_while_statement();
+    // DONE else if (match(TOKEN_REPEAT)) return parse_repeat_statement();
     // else if (match(TOKEN_PRINT)) return parse_print_statement();
     // ...
 
@@ -295,12 +432,15 @@ void print_ast(ASTNode *node, int level) {
         case AST_IF:
             printf("If\n"); 
             break;
-        // TODO 6: Add cases for new node types
-        // DONE case AST_IF: printf("If\n"); break;
-        // case AST_WHILE: printf("While\n"); break;
-        // case AST_REPEAT: printf("Repeat-Until\n"); break;
-        // case AST_BLOCK: printf("Block\n"); break;
-        // case AST_BINOP: printf("BinaryOp: %s\n", node->token.lexeme); break;
+        case AST_WHILE: 
+            printf("While\n"); 
+            break;
+        case AST_BLOCK: 
+            printf("Block\n"); 
+            break;
+        case AST_BINOP: 
+            printf("BinaryOp: %s\n", node->token.lexeme); 
+            break;
         default:
             printf("Unknown node type\n");
     }
@@ -321,12 +461,17 @@ void free_ast(ASTNode *node) {
 // Main function for testing
 int main() {
     // Test with both valid and invalid inputs
-    const char *input = "int x;\n" // Valid declaration
-            "x = 42;\n"; // Valid assignment;
+    const char *input = 
+            "int x;\n" // Valid declaration
+            "x = 42;\n" // Valid assignment;
+            "if (x == 42) { x = 41 }\n"
+            "print x;"; // Valid if statement;
     // TODO 8: Add more test cases and read from a file:
     const char *invalid_input = "int x;\n"
                                 "x = 42;\n"
-                                "int ;";
+                                "int ;"
+                                "if (x == 42) x = 41 }\n"
+                                "print x";
 
     printf("Parsing input:\n%s\n", invalid_input);
     parser_init(invalid_input);

@@ -1,1 +1,4 @@
-
+"int x;\n" // Valid declaration
+"x = 42;\n" // Valid assignment;
+"if (x == 42) { x = 41 }\n"; // Valid if statement;
+print x;
