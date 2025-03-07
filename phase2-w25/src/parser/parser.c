@@ -22,7 +22,7 @@ static const char *source;
 
 
 static void parse_error(ParseError error, Token token) {
-    // TODO 2: Add more error types for:
+    // ADDED more error types for:
     // - Missing parentheses
     // - Missing condition
     // - Missing block braces
@@ -46,6 +46,21 @@ static void parse_error(ParseError error, Token token) {
         case PARSE_ERROR_INVALID_EXPRESSION:
             printf("Invalid expression after '%s'\n", token.lexeme);
             break;
+        case PARSE_ERROR_MISSING_PARENTHESES:
+            printf("Missing parentheses after '%s'\n", token.lexeme);
+            break;
+        case PARSE_ERROR_MISSING_CONDITION_STATEMENT:
+            printf("Expected condition statement after '%s'\n", token.lexeme);
+            break;
+        case PARSE_ERROR_MISSING_BLOCK_BRACES:
+            printf("Missing block braces after '%s'\n", token.lexeme);
+            break;
+        case PARSE_ERROR_INVALID_OPERATOR:
+            printf("Invalid operator after '%s'\n", token.lexeme);
+            break;
+        case PARSE_ERROR_FUNCTION_CALL:
+            printf("Invalid function call '%s'\n", token.lexeme);
+            break;                     
         default:
             printf("Unknown error\n");
     }
