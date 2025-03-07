@@ -102,7 +102,7 @@ static void expect(TokenType type) {
 static ASTNode *parse_statement(void);
 
 // TODO 3: Add parsing functions for each new statement type
-// static ASTNode* parse_if_statement(void) { ... }
+// DONE static ASTNode* parse_if_statement(void) { ... }
 // static ASTNode* parse_while_statement(void) { ... }
 // static ASTNode* parse_repeat_statement(void) { ... }
 // static ASTNode* parse_print_statement(void) { ... }
@@ -134,7 +134,7 @@ static ASTNode *parse_declaration(void) {
 
 // Parse assignment: x = 5;
 static ASTNode *parse_assignment(void) {
-    ASTNode *node = create_node(AST_ASSIGN);
+    ASTNode *node = create_node(AST_VARDECL);
     node->left = create_node(AST_IDENTIFIER);
     node->left->token = current_token;
     advance();
@@ -155,16 +155,55 @@ static ASTNode *parse_assignment(void) {
     return node;
 }
 
+// Parse if statements: if (condition) { ... }
+static ASTNode *parse_if_statement(void) {
+    ASTNode *node = create_node(AST_IF);
+    advance(); // consume 'if'
+
+    if (!match(TOKEN_LPAREN)) {
+        parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
+        exit(1);
+    }
+
+    advance();
+    node->left = parse_expression();
+
+    if (!match(TOKEN_RPAREN)) {
+        parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
+        exit(1);
+    }
+
+    advance();
+
+    if (!match(TOKEN_LBRACE)) {
+        parse_error(PARSE_ERROR_MISSING_BLOCK_BRACES, current_token);
+        exit(1);
+    }
+
+    advance();
+    node->right = parse_expression();
+
+    if (!match(TOKEN_RBRACE)) {
+        parse_error(PARSE_ERROR_MISSING_BLOCK_BRACES, current_token);
+        exit(1);
+    }
+    
+    advance();
+    return node;
+}
+
+
 // Parse statement
 static ASTNode *parse_statement(void) {
     if (match(TOKEN_INT)) {
         return parse_declaration();
     } else if (match(TOKEN_IDENTIFIER)) {
         return parse_assignment();
+    } else if (match(TOKEN_IF)) { 
+        return parse_if_statement();
     }
-
     // TODO 4: Add cases for new statement types
-    // else if (match(TOKEN_IF)) return parse_if_statement();
+    // DONE else if (match(TOKEN_IF)) return parse_if_statement();
     // else if (match(TOKEN_WHILE)) return parse_while_statement();
     // else if (match(TOKEN_REPEAT)) return parse_repeat_statement();
     // else if (match(TOKEN_PRINT)) return parse_print_statement();
@@ -253,9 +292,11 @@ void print_ast(ASTNode *node, int level) {
         case AST_IDENTIFIER:
             printf("Identifier: %s\n", node->token.lexeme);
             break;
-
+        case AST_IF:
+            printf("If\n"); 
+            break;
         // TODO 6: Add cases for new node types
-        // case AST_IF: printf("If\n"); break;
+        // DONE case AST_IF: printf("If\n"); break;
         // case AST_WHILE: printf("While\n"); break;
         // case AST_REPEAT: printf("Repeat-Until\n"); break;
         // case AST_BLOCK: printf("Block\n"); break;
