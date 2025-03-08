@@ -204,8 +204,9 @@ Token get_next_token(const char* input, int* pos) {
             token.column = current_column;
             token.type = TOKEN_OPERATOR;
             last_token_type = 'o';
-            (*pos)++;
-            current_column++;
+            break;
+        case '=':
+            token.type = TOKEN_EQUALS;
             break;
         case ';':
             token.column = current_column;
@@ -250,6 +251,15 @@ Token get_next_token(const char* input, int* pos) {
             last_token_type = 'x';
             break;
     }
+
+    token.column = current_column - strlen(token.lexeme);
+    current_column += strlen(token.lexeme);
+
+    if (input[*pos] == '\n') {
+        current_line++;
+        current_column = 1;
+    }
+
 
     return token;
 }
