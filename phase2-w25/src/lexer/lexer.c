@@ -156,8 +156,16 @@ Token get_next_token(const char* input, int* pos) {
             last_token_type = 'o';
             break;
         case '=':
+            if (input[*pos] == '=') { 
+                token.lexeme[1] = '=';
+                token.lexeme[2] = '\0';
+                (*pos)++;
+                token.type = TOKEN_EQUAL_EQUAL; 
+        } else {
+            token.lexeme[1] = '\0';
             token.type = TOKEN_EQUALS;
-            break;
+        }
+        break;
         case ';':
             token.type = TOKEN_SEMICOLON;
             break;
@@ -178,14 +186,9 @@ Token get_next_token(const char* input, int* pos) {
             break;
     }
 
-    token.column = current_column - strlen(token.lexeme);
+    token.line = current_line;
+    token.column = current_column;
     current_column += strlen(token.lexeme);
-
-    if (input[*pos] == '\n') {
-        current_line++;
-        current_column = 1;
-    }
-
 
     return token;
 }
