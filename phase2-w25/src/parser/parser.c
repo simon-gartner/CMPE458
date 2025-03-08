@@ -20,6 +20,8 @@ static ASTNode *parse_comparison(void);
 
 // Current token being processed
 static Token current_token;
+static Token previous_token;
+
 static int position = 0;
 static const char *source;
 
@@ -38,11 +40,8 @@ static void parse_error(ParseError error, Token token) {
     };
 
     switch (error) {
-        case PARSE_ERROR_UNEXPECTED_TOKEN:
-            snprintf(errors[error_count].message, sizeof(errors[error_count].message), "Unexpected '%s'", token.lexeme);
-            break;
         case PARSE_ERROR_MISSING_SEMICOLON:
-            snprintf(errors[error_count].message, sizeof(errors[error_count].message), "Missing semicolon after '%s'", token.lexeme);
+            snprintf(errors[error_count].message, sizeof(errors[error_count].message), "Missing semicolon after '%s'", previous_token.lexeme);
             break;
         case PARSE_ERROR_MISSING_IDENTIFIER:
             snprintf(errors[error_count].message, sizeof(errors[error_count].message), "Missing identifier after '%s'", token.lexeme);
@@ -67,7 +66,10 @@ static void parse_error(ParseError error, Token token) {
             break;
         case PARSE_ERROR_FUNCTION_CALL:
             snprintf(errors[error_count].message, sizeof(errors[error_count].message), "Invalid function call '%s'", token.lexeme);
-            break;                     
+            break;
+        case PARSE_ERROR_UNEXPECTED_TOKEN:
+            snprintf(errors[error_count].message, sizeof(errors[error_count].message), "Unexpected '%s'", token.lexeme);
+            break;
         default:
             snprintf(errors[error_count].message, sizeof(errors[error_count].message), "Unknown error at %d:%d", token.line, token.column);
     }
@@ -85,6 +87,7 @@ void print_errors(void) {
 
 // Get next token
 static void advance(void) {
+    previous_token = current_token;
     current_token = get_next_token(source, &position);
 }
 
@@ -106,11 +109,19 @@ static int match(TokenType type) {
 }
 
 static void synchronize(void) {
-    while (!match(TOKEN_SEMICOLON) && !match(TOKEN_RBRACE) &&!match(TOKEN_LBRACE) && !match(TOKEN_EOF)) {
+    while (!match(TOKEN_SEMICOLON) && 
+           !match(TOKEN_RBRACE) && 
+           !match(TOKEN_LBRACE) &&
+           !match(TOKEN_IF) &&
+           !match(TOKEN_WHILE) &&
+           !match(TOKEN_REPEAT) &&
+           !match(TOKEN_PRINT) &&
+           !match(TOKEN_EOF)) {
         advance();
     }
     if (match(TOKEN_SEMICOLON)) advance();
 }
+
 
 
 // Expect a token type or error
@@ -142,7 +153,8 @@ static ASTNode *parse_declaration(void) {
     advance();
 
     if (!match(TOKEN_IDENTIFIER)) {
-        parse_error(PARSE_ERROR_MISSING_IDENTIFIER, node->token);
+        parse_error(PARSE_ERROR_MISSING_IDENTIFIER, previous_token);
+        free_ast(node);
         synchronize();
         return NULL;
     }
@@ -154,10 +166,9 @@ static ASTNode *parse_declaration(void) {
     if (!match(TOKEN_SEMICOLON)) {
         parse_error(PARSE_ERROR_MISSING_SEMICOLON, node->left->token);
         synchronize();
-        return NULL;
+    } else {
+        advance();
     }
-
-    advance();
     return node;
 }
 
@@ -166,34 +177,30 @@ static ASTNode *parse_assignment(void) {
     ASTNode *node = create_node(AST_ASSIGN);
     node->left = create_node(AST_IDENTIFIER);
     node->left->token = current_token;
-
     advance();
 
     if (!match(TOKEN_EQUALS)) {
         parse_error(PARSE_ERROR_MISSING_EQUALS, node->left->token);
-        synchronize();
         free_ast(node);
+        synchronize();
         return NULL;
     }
-
     advance();
 
-    if (!(node->right = parse_expression())) {
+    node->right = parse_expression();
+    if (!node->right) {
         parse_error(PARSE_ERROR_INVALID_EXPRESSION, current_token);
-        synchronize();
         free_ast(node);
+        synchronize();
         return NULL;
     }
 
     if (!match(TOKEN_SEMICOLON)) {
-        parse_error(PARSE_ERROR_MISSING_SEMICOLON, node->token);
+        parse_error(PARSE_ERROR_MISSING_SEMICOLON, current_token);
         synchronize();
-        free_ast(node);
-        return NULL;
+    } else {
+        advance();
     }
-
-    advance();
-
     return node;
 }
 
@@ -233,39 +240,30 @@ static ASTNode *parse_term(void) {
 // Parse if statements: if (condition) { ... }
 static ASTNode *parse_if_statement(void) {
     ASTNode *node = create_node(AST_IF);
-    node->token = current_token;
-    advance(); // consume 'if'
+    advance(); 
 
-    // Check for '('
-    if (!match(TOKEN_LPAREN)) {
-        parse_error(PARSE_ERROR_MISSING_PARENTHESES, node->token);
-    } else {
+    if (match(TOKEN_LPAREN)) {
         advance();
-    }   
-    
-    // Parse condition
-    node->left = parse_expression();
-    if (!node->left) {
-        parse_error(PARSE_ERROR_MISSING_CONDITION_STATEMENT, node->token);
-    }
-
-    // Check for ')'
-    if (!match(TOKEN_RPAREN)) {
+        node->left = parse_expression();
+        if (!match(TOKEN_RPAREN)) {
+            parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
+        } else {
+            advance();
+        }
+    } else {
         parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
-    } else {
-        advance();
     }
 
-    // Parse the body - handle both block and single statements
+    // Body parsing
     if (match(TOKEN_LBRACE)) {
         node->right = parse_block_statement();
     } else {
-        // Single statement without braces
         node->right = parse_statement();
     }
     
-    return node;
+    return node; // Always return node even with errors
 }
+
 
 
 // Parse while statements: while (condition) { ... }
@@ -361,22 +359,18 @@ static ASTNode *parse_repeat_statement(void) {
 // Parse print statements: print x
 static ASTNode* parse_print_statement(void) {
     ASTNode *node = create_node(AST_PRINT);
-    node->token = current_token; 
     advance(); // consume 'print'
 
-    // Check for variable to print
-    if (!match(TOKEN_IDENTIFIER)) {
-        parse_error(PARSE_ERROR_MISSING_IDENTIFIER, node->token);
+    if (!match(TOKEN_IDENTIFIER) && !match(TOKEN_NUMBER)) {
+        parse_error(PARSE_ERROR_MISSING_IDENTIFIER, current_token);
         synchronize();
         return node;
     }
 
-    node->token = current_token;
-    advance();
+    node->left = parse_expression();
 
-    // check for ';'
     if (!match(TOKEN_SEMICOLON)) {
-        parse_error(PARSE_ERROR_MISSING_SEMICOLON, node->token);
+        parse_error(PARSE_ERROR_MISSING_SEMICOLON, current_token);
         synchronize();
     } else {
         advance();
@@ -408,15 +402,6 @@ static ASTNode* parse_block_statement(void) {
             advance();
         }
     }
-    
-    // Check for closing brace
-    if (match(TOKEN_RBRACE)) {
-        advance(); // Consume '}'
-    } else if (!match(TOKEN_EOF)) {
-        parse_error(PARSE_ERROR_MISSING_BLOCK_BRACES, current_token);
-    }
-    
-    return node;
 }
 
 
@@ -603,7 +588,7 @@ int main() {
     const char *invalid_input = "int x\n"
                                 "x = 42;\n"
                                 "int ; \n"
-                                "if (x == 42) x = 41 }\n"
+                                "if (x == 42) { x = 41 }\n"
                                 "print x";
 
     printf("Parsing input:\n%s\n", invalid_input);
