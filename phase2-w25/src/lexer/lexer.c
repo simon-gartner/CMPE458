@@ -8,6 +8,8 @@
 #include "../../include/lexer.h"
 
 static int current_line = 1;
+static int current_column = 1;
+
 static char last_token_type = 'x';
 
 // Keywords table
@@ -85,7 +87,7 @@ void print_token(Token token) {
 }
 
 Token get_next_token(const char* input, int* pos) {
-    Token token = {TOKEN_ERROR, "", current_line, ERROR_NONE};
+    Token token = {TOKEN_ERROR, "", current_line, current_column, ERROR_NONE};
     char c;
 
     // Skip whitespace and track line numbers
@@ -175,6 +177,15 @@ Token get_next_token(const char* input, int* pos) {
             token.error = ERROR_INVALID_CHAR;
             break;
     }
+
+    token.column = current_column - strlen(token.lexeme);
+    current_column += strlen(token.lexeme);
+
+    if (input[*pos] == '\n') {
+        current_line++;
+        current_column = 1;
+    }
+
 
     return token;
 }

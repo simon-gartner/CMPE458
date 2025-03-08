@@ -4,6 +4,8 @@
 
 #include "tokens.h"
 
+#define MAX_ERRORS 256 // Can be adjusted later
+
 // Basic node types for AST
 typedef enum {
     AST_PROGRAM,        // Program node
@@ -43,6 +45,18 @@ typedef struct ASTNode {
     struct ASTNode* right;     // Right child
     // TODO: Add more fields if needed
 } ASTNode;
+
+typedef struct {
+    int line;
+    int column;
+} SourcePosition;
+
+typedef struct {
+    ParseError type;
+    char message[256];
+    SourcePosition position;
+} ParseErrorInfo;
+
 
 // Parser functions
 void parser_init(const char* input);
