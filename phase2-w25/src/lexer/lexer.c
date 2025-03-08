@@ -20,7 +20,8 @@ static struct {
     {"print", TOKEN_PRINT},
     {"while", TOKEN_WHILE},
     {"repeat", TOKEN_REPEAT},
-    {"until", TOKEN_UNTIL}
+    {"until", TOKEN_UNTIL},
+    {"factorial", TOKEN_FACTORIAL}
 };
 
 static int is_keyword(const char* word) {

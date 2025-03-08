@@ -17,6 +17,7 @@ typedef enum {
     AST_REPEAT,         // Repeat statement
     AST_BLOCK,          // Code block?
     AST_BINOP,          // Binary operator
+    AST_FACTORIAL,      // Factorial function
     // TODO: Add more node types as needed
 } ASTNodeType;
 

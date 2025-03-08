@@ -7,12 +7,12 @@
 
 
 // TODO 1: Add more parsing function declarations for:
-ASTNode* parse_if_statement(); // - if statements: if (condition) { ... }
-ASTNode* parse_while_statement(); // - while loops: while (condition) { ... }
-ASTNode* parse_repeat_statement(); // - repeat-until: repeat { ... } until (condition)
-ASTNode* parse_print_statement(); // - print statements: print x;
-ASTNode* parse_block(); // - blocks: { statement1; statement2; }
-ASTNode* parse_factorial(); // - factorial function: factorial(x)
+static ASTNode* parse_if_statement(); // - if statements: if (condition) { ... }
+static ASTNode* parse_while_statement(); // - while loops: while (condition) { ... }
+static ASTNode* parse_repeat_statement(); // - repeat-until: repeat { ... } until (condition)
+static ASTNode* parse_print_statement(); // - print statements: print x;
+static ASTNode* parse_block(); // - blocks: { statement1; statement2; }
+static ASTNode* parse_factorial(); // - factorial function: factorial(x)
 
 
 // Current token being processed
@@ -106,8 +106,8 @@ static ASTNode *parse_statement(void);
 // DONE static ASTNode* parse_while_statement(void) { ... }
 // DONE static ASTNode* parse_repeat_statement(void) { ... }
 // DONE static ASTNode* parse_print_statement(void) { ... }
-// static ASTNode* parse_block(void) { ... }
-// static ASTNode* parse_factorial(void) { ... }
+// DONE static ASTNode* parse_block(void) { ... }
+// DONE static ASTNode* parse_factorial(void) { ... }
 
 static ASTNode *parse_expression(void);
 
@@ -308,6 +308,7 @@ static ASTNode* parse_print_statement(void) {
     ASTNode *node = create_node(AST_PRINT);
     advance(); // consume 'print'
 
+    // Check for variable to print
     if (!match(TOKEN_IDENTIFIER)) {
         parse_error(PARSE_ERROR_MISSING_IDENTIFIER, current_token);
         exit(1);
@@ -316,12 +317,74 @@ static ASTNode* parse_print_statement(void) {
     node->token = current_token;
     advance();
 
+    // check for ';'
     if (!match(TOKEN_SEMICOLON)) {
         parse_error(PARSE_ERROR_MISSING_SEMICOLON, current_token);
         exit(1);
     }
     advance();
     return node;
+}
+
+// Parse block statements: { statement1; statement2; }
+static ASTNode* parse_block_statement(void) {
+    ASTNode *node = create_node(AST_BLOCK);
+
+    // Check for '{'
+    if (!match(TOKEN_LBRACE)) {
+        parse_error(PARSE_ERROR_MISSING_BLOCK_BRACES, current_token);
+        exit(1);
+    }
+    advance();
+
+    // Check for expressions until '}' is found
+    while (match(TOKEN_RBRACE)) {
+        node->left = parse_expression();
+        if (node->left == NULL) {
+            parse_error(PARSE_ERROR_UNEXPECTED_TOKEN, current_token);
+            exit(1);
+        }
+        advance();
+
+        // Check for ';'
+        if (!match(TOKEN_SEMICOLON)) {
+            parse_error(PARSE_ERROR_MISSING_SEMICOLON, current_token);
+            exit(1);
+        }
+        advance();
+    }
+    // if (!match(TOKEN_RBRACE)) {
+    //     parse_error(PARSE_ERROR_MISSING_BLOCK_BRACES, current_token);
+    //     exit(1);
+    // }
+    advance(); 
+    return node;
+}
+
+// Parse factorial statements factorial(x)
+static ASTNode* parse_factorial(void){
+    ASTNode *node = create_node(AST_FACTORIAL);
+    advance();
+     // Check for '('
+     if (!match(TOKEN_LPAREN)) {
+        parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
+        exit(1);
+    }
+    advance();
+    
+    // Check for number or variable
+    if (!match(TOKEN_NUMBER) || !match(TOKEN_IDENTIFIER)) {
+        parse_error(PARSE_ERROR_INVALID_EXPRESSION, current_token);
+        exit(1);
+    }
+    advance();
+
+    // Check for ')'
+    if (!match(TOKEN_RPAREN)) {
+        parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
+        exit(1);
+    }
+    advance();
 }
 
 // Parse statement
@@ -338,12 +401,14 @@ static ASTNode *parse_statement(void) {
         return parse_repeat_statement();
     } else if (match(TOKEN_PRINT)) {
         return parse_print_statement();
+    } else if (match(TOKEN_FACTORIAL)) {
+        return parse_factorial();
     }
     // TODO 4: Add cases for new statement types
     // DONE else if (match(TOKEN_IF)) return parse_if_statement();
     // DONE else if (match(TOKEN_WHILE)) return parse_while_statement();
     // DONE else if (match(TOKEN_REPEAT)) return parse_repeat_statement();
-    // else if (match(TOKEN_PRINT)) return parse_print_statement();
+    // DONE else if (match(TOKEN_PRINT)) return parse_print_statement();
     // ...
 
     printf("Syntax Error: Unexpected token\n");
@@ -464,17 +529,17 @@ int main() {
     const char *input = 
             "int x;\n" // Valid declaration
             "x = 42;\n" // Valid assignment;
-            "if (x == 42) { x = 41 }\n"
+            "if ( x == 42 ) { x = 41 }\n"
             "print x;"; // Valid if statement;
     // TODO 8: Add more test cases and read from a file:
     const char *invalid_input = "int x;\n"
                                 "x = 42;\n"
-                                "int ;"
+                                "int ; \n"
                                 "if (x == 42) x = 41 }\n"
                                 "print x";
 
-    printf("Parsing input:\n%s\n", invalid_input);
-    parser_init(invalid_input);
+    printf("Parsing input:\n%s\n", input);
+    parser_init(input);
     ASTNode *ast = parse();
 
     printf("\nAbstract Syntax Tree:\n");

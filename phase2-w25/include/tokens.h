@@ -19,6 +19,7 @@ typedef enum {
     TOKEN_WHILE,       // while keyword
     TOKEN_REPEAT,      // Repeat keyword
     TOKEN_UNTIL,       // Until keyword
+    TOKEN_FACTORIAL,
     TOKEN_ERROR
 } TokenType;
 

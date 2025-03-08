@@ -1,5 +1,5 @@
-"int x;\n"
-"x = 42;\n"
-"int ;"
-"if () x = 41 }\n";
+int x;\n
+x = 42;\n
+int ;
+if () x = 41 }
 print;
