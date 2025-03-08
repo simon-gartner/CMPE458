@@ -1,4 +1,3 @@
-/* tokens.h */
 #ifndef TOKENS_H
 #define TOKENS_H
 
@@ -17,9 +16,16 @@ typedef enum {
     TOKEN_INT,         // int keyword
     TOKEN_PRINT,       // print keyword
     TOKEN_WHILE,       // while keyword
-    TOKEN_REPEAT,      // Repeat keyword
-    TOKEN_UNTIL,       // Until keyword
-    TOKEN_FACTORIAL,
+    TOKEN_REPEAT,      // repeat keyword
+    TOKEN_UNTIL,       // until keyword
+    TOKEN_FACTORIAL,   // factorial keyword
+
+    // Comparison Operators
+    TOKEN_LESS,        // <
+    TOKEN_GREATER,     // >
+    TOKEN_EQUAL_EQUAL, // ==
+    TOKEN_NOT_EQUAL,   // !=
+
     TOKEN_ERROR
 } TokenType;
 
