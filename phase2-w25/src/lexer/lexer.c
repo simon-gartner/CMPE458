@@ -89,17 +89,23 @@ void print_token(Token token) {
 }
 
 Token get_next_token(const char* input, int* pos) {
-    Token token = {TOKEN_ERROR, "", current_line, current_column, ERROR_NONE};
+    // Skip whitespace while tracking position
     char c;
-
-    // Skip whitespace and track line numbers
     while ((c = input[*pos]) != '\0' && (c == ' ' || c == '\n' || c == '\t')) {
         if (c == '\n') {
             current_line++;
             current_column = 1;
+        } else {
+            current_column++;
         }
         (*pos)++;
     }
+
+    // Save the starting position of the token
+    int token_line = current_line;
+    int token_column = current_column;
+    
+    Token token = {TOKEN_ERROR, "", token_line, token_column, ERROR_NONE};
 
     if (input[*pos] == '\0') {
         token.type = TOKEN_EOF;
@@ -112,27 +118,26 @@ Token get_next_token(const char* input, int* pos) {
     // Handle numbers
     if (isdigit(c)) {
         int i = 0;
-        token.column = current_column;
         do {
             token.lexeme[i++] = c;
             (*pos)++;
+            current_column++;
             c = input[*pos];
         } while (isdigit(c) && i < sizeof(token.lexeme) - 1);
 
         token.lexeme[i] = '\0';
         token.type = TOKEN_NUMBER;
-        last_token_type = 'x';  // Reset operator tracking
-        current_column += i;
+        last_token_type = 'x';
         return token;
     }
 
     // Handle identifiers and keywords
     if (isalpha(c) || c == '_') {
         int i = 0;
-        token.column = current_column;
         do {
             token.lexeme[i++] = c;
             (*pos)++;
+            current_column++;
             c = input[*pos];
         } while ((isalnum(c) || c == '_') && i < sizeof(token.lexeme) - 1);
 
@@ -145,125 +150,89 @@ Token get_next_token(const char* input, int* pos) {
         } else {
             token.type = TOKEN_IDENTIFIER;
         }
-        last_token_type = 'x';  // Reset operator tracking
-        current_column += i;
+        last_token_type = 'x';
         return token;
     }
 
-    // Handle operators and delimiters
-    token.lexeme[0] = c;
-    token.lexeme[1] = '\0';
-
-    // Handle multi-character comparison operators
+    // Handle multi-character operators
     if (c == '=' && input[*pos + 1] == '=') {
-        token.column = current_column;
         token.type = TOKEN_EQUAL_EQUAL;
         strcpy(token.lexeme, "==");
         (*pos) += 2;
         current_column += 2;
         return token;
     }
+    
     if (c == '!' && input[*pos + 1] == '=') {
-        token.column = current_column;
         token.type = TOKEN_NOT_EQUAL;
         strcpy(token.lexeme, "!=");
         (*pos) += 2;
         current_column += 2;
         return token;
     }
-    if (c == '<') {
-        token.column = current_column;
-        token.type = TOKEN_LESS;
-        (*pos)++;
-        current_column++;
-        return token;
-    }
-    if (c == '>') {
-        token.column = current_column;
-        token.type = TOKEN_GREATER;
-        (*pos)++;
-        current_column++;
-        return token;
-    }
-    if (c == '=') {
-        token.column = current_column;
-        token.type = TOKEN_EQUALS;
-        (*pos)++;
-        current_column++;
-        return token;
-    }
 
-    // Handle single-character operators and symbols
+    // Handle single-character tokens
+    token.lexeme[0] = c;
+    token.lexeme[1] = '\0';
+    (*pos)++;
+    current_column++;
+
     switch (c) {
         case '+': case '-': case '*': case '/':
             if (last_token_type == 'o') {
                 token.error = ERROR_CONSECUTIVE_OPERATORS;
-                (*pos)++;  // Prevent infinite loop
                 return token;
             }
-            token.column = current_column;
             token.type = TOKEN_OPERATOR;
             last_token_type = 'o';
-            (*pos)++; 
             break;
         case '=':
             token.type = TOKEN_EQUALS;
+            last_token_type = 'x';
+            break;
+        case '<':
+            token.type = TOKEN_LESS;
+            last_token_type = 'x';
+            break;
+        case '>':
+            token.type = TOKEN_GREATER;
+            last_token_type = 'x';
             break;
         case ';':
-            token.column = current_column;
             token.type = TOKEN_SEMICOLON;
-            (*pos)++;
-            current_column++;
             last_token_type = 'x';
             break;
         case '(':
-            token.column = current_column;
             token.type = TOKEN_LPAREN;
-            (*pos)++;
-            current_column++;
             last_token_type = 'x';
             break;
         case ')':
-            token.column = current_column;
             token.type = TOKEN_RPAREN;
-            (*pos)++;
-            current_column++;
             last_token_type = 'x';
             break;
         case '{':
-            token.column = current_column;
             token.type = TOKEN_LBRACE;
-            (*pos)++;
-            current_column++;
             last_token_type = 'x';
             break;
         case '}':
-            token.column = current_column;
             token.type = TOKEN_RBRACE;
-            (*pos)++;
-            current_column++;
             last_token_type = 'x';
             break;
         default:
-            token.column = current_column;
             token.error = ERROR_INVALID_CHAR;
-            (*pos)++;
-            current_column++;
             last_token_type = 'x';
             break;
     }
 
-    token.column = current_column - strlen(token.lexeme);
-    current_column += strlen(token.lexeme);
-
+    // Handle newlines right after this token
     if (input[*pos] == '\n') {
         current_line++;
         current_column = 1;
     }
 
-
     return token;
 }
+
 
 //int main() {
 //    const char *input = 
