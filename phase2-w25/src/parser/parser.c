@@ -50,6 +50,12 @@ static int error_count = 0;
 
 static void parse_error(ParseError error, Token token) {
     if (error_count >= MAX_ERRORS) return;
+
+    int column = token.column;
+    if (error == PARSE_ERROR_MISSING_SEMICOLON) {
+        column += strlen(token.lexeme);
+    }
+
     errors[error_count] = (ParseErrorInfo){
         .type = error,
         .position = {token.line, token.column},
@@ -58,10 +64,13 @@ static void parse_error(ParseError error, Token token) {
 
     switch (error) {
         case PARSE_ERROR_MISSING_SEMICOLON:
-            snprintf(errors[error_count].message, sizeof(errors[error_count].message), "Missing semicolon after '%s'", previous_token.lexeme);
+            snprintf(errors[error_count].message, sizeof(errors[error_count].message), "Missing semicolon after '%s'", token.lexeme);
             break;
         case PARSE_ERROR_MISSING_IDENTIFIER:
             snprintf(errors[error_count].message, sizeof(errors[error_count].message), "Missing identifier after '%s'", token.lexeme);
+            break;
+        case PARSE_ERROR_UNEXPECTED_TOKEN:
+            snprintf(errors[error_count].message, sizeof(errors[error_count].message), "Unexpected '%s'", token.lexeme);
             break;
         case PARSE_ERROR_MISSING_EQUALS:
             snprintf(errors[error_count].message, sizeof(errors[error_count].message), "Expected '=' after '%s'", token.lexeme);
@@ -83,9 +92,6 @@ static void parse_error(ParseError error, Token token) {
             break;
         case PARSE_ERROR_FUNCTION_CALL:
             snprintf(errors[error_count].message, sizeof(errors[error_count].message), "Invalid function call '%s'", token.lexeme);
-            break;
-        case PARSE_ERROR_UNEXPECTED_TOKEN:
-            snprintf(errors[error_count].message, sizeof(errors[error_count].message), "Unexpected '%s'", token.lexeme);
             break;
         default:
             snprintf(errors[error_count].message, sizeof(errors[error_count].message), "Unknown error at %d:%d", token.line, token.column);
@@ -131,6 +137,7 @@ static void synchronize(void) {
            !match(TOKEN_IF) &&
            !match(TOKEN_WHILE) &&
            !match(TOKEN_REPEAT) &&
+           !match(TOKEN_INT) &&
            !match(TOKEN_PRINT) &&
            !match(TOKEN_EOF)) {
         advance();
@@ -154,26 +161,37 @@ static ASTNode *parse_declaration(void) {
     node->token = current_token;
     advance();
 
+    if (match(TOKEN_NUMBER)) {
+        parse_error(PARSE_ERROR_UNEXPECTED_TOKEN, current_token);
+        Token number_token = current_token;
+        advance(); 
+        
+        if (!match(TOKEN_SEMICOLON)) {
+            parse_error(PARSE_ERROR_MISSING_SEMICOLON, number_token);
+        } else {
+            advance();
+        }
+        return node;
+    }
+
     if (!match(TOKEN_IDENTIFIER)) {
         parse_error(PARSE_ERROR_MISSING_IDENTIFIER, previous_token);
-        free_ast(node);
         synchronize();
-        return NULL;
+        return node;
     }
 
     node->left = create_node(AST_IDENTIFIER);
-
     node->left->token = current_token;
     advance();
 
     if (!match(TOKEN_SEMICOLON)) {
-        parse_error(PARSE_ERROR_MISSING_SEMICOLON, node->left->token);
-        synchronize();
+        parse_error(PARSE_ERROR_MISSING_SEMICOLON, previous_token);
     } else {
         advance();
     }
     return node;
 }
+
 
 
 static ASTNode *parse_assignment(void) {
@@ -183,7 +201,7 @@ static ASTNode *parse_assignment(void) {
     advance(); // not sure if needed, increments pointer
 
     if (!match(TOKEN_EQUALS)) {
-        parse_error(PARSE_ERROR_MISSING_EQUALS, node->left->token);
+        parse_error(PARSE_ERROR_MISSING_EQUALS, previous_token);
         free_ast(node);
         synchronize();
         return NULL;
@@ -199,8 +217,7 @@ static ASTNode *parse_assignment(void) {
     }
 
     if (!match(TOKEN_SEMICOLON)) {
-        parse_error(PARSE_ERROR_MISSING_SEMICOLON, current_token);
-        synchronize();
+        parse_error(PARSE_ERROR_MISSING_SEMICOLON, previous_token);
     } else {
         advance();
     }
@@ -619,7 +636,7 @@ int main(int argc, char *argv[]) {
     } else {
         printf("\nFile parsed successfully!\n");
         printf("Abstract Syntax Tree:\n");
-    print_ast(ast, 0);
+        print_ast(ast, 0);
     }
     
     free_ast(ast);
