@@ -322,7 +322,7 @@ static ASTNode *parse_if_statement(void) {
         advance(); 
         node->left = parse_expression();
         if (!match(TOKEN_RPAREN)) {
-            parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
+            parse_error(PARSE_ERROR_MISSING_PARENTHESES, previous_token);
         } else {
             advance(); 
         }
@@ -410,7 +410,7 @@ static ASTNode* parse_print_statement(void) {
     advance(); // consume 'print'
 
     if (!match(TOKEN_IDENTIFIER) && !match(TOKEN_NUMBER)) {
-        parse_error(PARSE_ERROR_MISSING_IDENTIFIER, current_token);
+        parse_error(PARSE_ERROR_MISSING_IDENTIFIER, previous_token);
         synchronize();
         return node;
     }

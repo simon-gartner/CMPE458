@@ -1,5 +1,9 @@
-int x;\n
-x = 42;\n
+int x
+int 49;
 int ;
-if () x = 41 }
+
 print;
+
+if (x == 42 {
+    print x;
+}
