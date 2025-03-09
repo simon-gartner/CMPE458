@@ -1,4 +1,15 @@
-int x; // Valid declaration
-x = 42; // Valid assignment;
-if (x == 42) { x = 41 }; // Valid if statement
+int x;
+int y;
+int result;
+
+x = 42;
+y = 10;
+
+if (x == 42) {
+    x = x - 1;
+    print x;
+}
+
 print x;
+print y;
+print result;

@@ -582,25 +582,49 @@ void free_ast(ASTNode *node) {
 }
 
 //changed testing function for operator precidense.
-int main() {
-    const char *input = 
-        "int x;\n"
-        "x = 3 + 4 * 5;\n"
-        "print x;";
-    
-    printf("Parsing input:\n%s\n", input);
-    parser_init(input);
-    ASTNode *ast = parse();
-    
-    if (error_count > 0) {
-        printf("\n%d WARNING: Errors Found:\n", error_count);
-        print_errors();
-        free_ast(ast);
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        printf("Usage: %s <textfile>\n", argv[0]);
         return 1;
     }
     
-    printf("\nAbstract Syntax Tree:\n");
+    FILE *file = fopen(argv[1], "r");
+    if (!file) {
+        printf("Error: Could not open file '%s'\n", argv[1]);
+        return 1;
+    }
+    
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    
+    char *source = malloc(file_size + 1);
+    if (!source) {
+        printf("Error: Memory allocation failed\n");
+        fclose(file);
+        return 1;
+    }
+    
+    size_t bytes_read = fread(source, 1, file_size, file);
+    source[bytes_read] = '\0';
+    fclose(file);
+    
+    printf("Parsing file: %s\n", argv[1]);
+    parser_init(source);
+    ASTNode *ast = parse();
+    
+    if (error_count > 0) {
+        printf("\n%d errors found:\n", error_count);
+        print_errors();
+    } else {
+        printf("\nFile parsed successfully!\n");
+        printf("Abstract Syntax Tree:\n");
     print_ast(ast, 0);
+    }
+    
     free_ast(ast);
+    free(source);
+    
     return 0;
 }
+
