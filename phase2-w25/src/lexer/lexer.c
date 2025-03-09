@@ -204,6 +204,7 @@ Token get_next_token(const char* input, int* pos) {
             token.column = current_column;
             token.type = TOKEN_OPERATOR;
             last_token_type = 'o';
+            (*pos)++; 
             break;
         case '=':
             token.type = TOKEN_EQUALS;
@@ -264,24 +265,25 @@ Token get_next_token(const char* input, int* pos) {
     return token;
 }
 
-int main() {
-    const char *input = 
-        "int x = 123;\n"
-        "test_var = 456;\n"
-        "print x;\n"
-        "if (y > 10) {\n"
-        "    @#$ invalid\n"
-        "    x = ++2;\n"
-        "}";
-
-    printf("Analyzing input:\n%s\n\n", input);
-    int position = 0;
-    Token token;
-
-    do {
-        token = get_next_token(input, &position);
-        print_token(token);
-    } while (token.type != TOKEN_EOF);
-
-    return 0;
-}
+//int main() {
+//    const char *input = 
+//        "int x = 123;\n"
+//        "test_var = 456;\n"
+//        "print x;\n"
+//        "if (y > 10) {\n"
+//        "    @#$ invalid\n"
+//        "    x = ++2;\n"
+//        "}\n"
+//        " x = 3 + 4 * 5;";
+//
+//    printf("Analyzing input:\n%s\n\n", input);
+//    int position = 0;
+//    Token token;
+//
+//    do {
+//        token = get_next_token(input, &position);
+//        print_token(token);
+//    } while (token.type != TOKEN_EOF);
+//
+//    return 0;
+//}
