@@ -1,0 +1,9 @@
+int x
+int 49;
+int ;
+
+print;
+
+if (x == 42 {
+    print x;
+}
