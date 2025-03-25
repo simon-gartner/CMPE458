@@ -23,20 +23,52 @@ Symbol* lookup_symbol(SymbolTable* table, const char* name);
 
 // Enter a new scope level
 // Increments the current scope level when entering a block (e.g., if, while)
-void enter_scope(SymbolTable* table);
+void enter_scope(SymbolTable* table){
+    table->current_scope++;
+}
 
+void remove_symbols_in_current_scope(SymbolTable* table){
+    Symbol* prev = NULL;
+    Symbol* curr = table->head;
+    while (curr) {
+        if (curr->scope_level == table->current_scope) {
+            if (prev) {
+                prev->next = curr->next;
+            } else {
+                table->head = curr->next;
+            }
+            Symbol* temp = curr;
+            curr = curr->next;
+            free(temp);
+        } else {
+            prev = curr;
+            curr = curr->next;
+        }
+    }
+}
 // Exit the current scope
 // Decrements the current scope level when leaving a block
 // Optionally removes symbols that are no longer in scope
-void exit_scope(SymbolTable* table);
+void exit_scope(SymbolTable* table){
+    remove_symbols_in_current_scope(table);
+    table->current_scope--;
+}
 
 // Remove symbols from the current scope
 // Cleans up symbols that are no longer accessible after leaving a scope
-void remove_symbols_in_current_scope(SymbolTable* table);
+
 
 // Free the symbol table memory
 // Releases all allocated memory when the symbol table is no longer needed
-void free_symbol_table(SymbolTable* table);
+void free_symbol_table(SymbolTable* table){
+    Symbol* curr = table->head;
+    while (curr) {
+        Symbol* next = curr->next;
+        free(curr);
+        curr = next;
+    }
+    free(table);
+}
 
 // Main semantic analysis function
 int analyze_semantics(ASTNode* ast);
@@ -48,7 +80,49 @@ int check_declaration(ASTNode* node, SymbolTable* table);
 int check_assignment(ASTNode* node, SymbolTable* table);
 
 // Check an expression for type correctness
-int check_expression(ASTNode* node, SymbolTable* table);
+int check_expression(ASTNode* node, SymbolTable* table){
+    if (!node) return 0;
+    int valid = 1;
+    switch (node->type) {
+        case AST_NUMBER:
+            // Number literals are int by default.
+            break;
+        case AST_IDENTIFIER: {
+            // Check that the variable is declared.
+            Symbol* symbol = lookup_symbol(table, node->token.lexeme);
+            if (!symbol) {
+                semantic_error(SEM_ERROR_UNDECLARED_VARIABLE, node->token.lexeme, node->token.line);
+                valid = 0;
+            } else if (!symbol->is_initialized) {
+                // Warn if used without initialization.
+                semantic_error(SEM_ERROR_UNINITIALIZED_VARIABLE, node->token.lexeme, node->token.line);
+            }
+            break;
+        }
+        case AST_BINOP: {
+            // Recursively check both operands.
+            int leftValid = check_expression(node->left, table);
+            int rightValid = check_expression(node->right, table);
+            valid = leftValid && rightValid;
+            // In a more advanced type system, you would compare the types of both operands here.
+            break;
+        }
+        case AST_FACTORIAL:
+            // Factorial should have a valid operand.
+            if (!node->left) {
+                semantic_error(SEM_ERROR_INVALID_OPERATION, "factorial", node->token.line);
+                valid = 0;
+            } else {
+                valid = check_expression(node->left, table);
+            }
+            break;
+        default:
+            // For any other expression types, recursively check child nodes.
+            valid = check_expression(node->left, table) && check_expression(node->right, table);
+            break;
+    }
+    return valid;
+}
 
 // Check a block of statements, handling scope
 int check_block(ASTNode* node, SymbolTable* table);
