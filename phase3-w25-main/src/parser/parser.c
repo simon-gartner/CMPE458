@@ -532,7 +532,7 @@ void parser_init(const char *input) {
 }
 
 // run parse function
-ASTNode *parse(void) {
+{
     return parse_program();
 }
 

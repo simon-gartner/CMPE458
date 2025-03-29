@@ -1,4 +1,4 @@
-/* parser.c */
+/* semantic.c */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +20,21 @@ void add_symbol(SymbolTable* table, const char* name, int type, int line);
 // Searches for a variable by name across all accessible scopes
 // Returns the symbol if found, NULL otherwise
 Symbol* lookup_symbol(SymbolTable* table, const char* name);
+
+// Main semantic analysis function
+int analyze_semantics(ASTNode* ast);
+
+// Check a variable declaration
+int check_declaration(ASTNode* node, SymbolTable* table);
+
+// Check a variable assignment
+int check_assignment(ASTNode* node, SymbolTable* table);
+
+// Check a block of statements, handling scope
+int check_block(ASTNode* node, SymbolTable* table);
+
+// Check a condition (e.g., in if statements)
+int check_condition(ASTNode* node, SymbolTable* table);
 
 // Enter a new scope level
 // Increments the current scope level when entering a block (e.g., if, while)
@@ -46,6 +61,7 @@ void remove_symbols_in_current_scope(SymbolTable* table){
         }
     }
 }
+
 // Exit the current scope
 // Decrements the current scope level when leaving a block
 // Optionally removes symbols that are no longer in scope
@@ -53,10 +69,6 @@ void exit_scope(SymbolTable* table){
     remove_symbols_in_current_scope(table);
     table->current_scope--;
 }
-
-// Remove symbols from the current scope
-// Cleans up symbols that are no longer accessible after leaving a scope
-
 
 // Free the symbol table memory
 // Releases all allocated memory when the symbol table is no longer needed
@@ -69,15 +81,6 @@ void free_symbol_table(SymbolTable* table){
     }
     free(table);
 }
-
-// Main semantic analysis function
-int analyze_semantics(ASTNode* ast);
-
-// Check a variable declaration
-int check_declaration(ASTNode* node, SymbolTable* table);
-
-// Check a variable assignment
-int check_assignment(ASTNode* node, SymbolTable* table);
 
 // Check an expression for type correctness
 int check_expression(ASTNode* node, SymbolTable* table){
@@ -124,11 +127,27 @@ int check_expression(ASTNode* node, SymbolTable* table){
     return valid;
 }
 
-// Check a block of statements, handling scope
-int check_block(ASTNode* node, SymbolTable* table);
+int check_statement(ASTNode* node, SymbolTable* table) {
+    if (!node) return 1;
 
-// Check a condition (e.g., in if statements)
-int check_condition(ASTNode* node, SymbolTable* table);
+    switch (node->type) {
+        case AST_VARDECL:
+            return check_declaration(node, table);
+        case AST_ASSIGN:
+            return check_assignment(node, table);
+        case AST_IF:
+            return check_condition(node->left, table) && check_block(node->right, table);
+        case AST_WHILE:
+            return check_condition(node->left, table) && check_block(node->right, table);
+        case AST_BLOCK:
+            return check_block(node, table);
+        case AST_PRINT:
+            return check_expression(node->left, table);
+        default:
+            semantic_error(SEM_ERROR_INVALID_OPERATION, node->token.lexeme, node->token.line);
+            return 0;
+    }
+}
 
 // Initialize symbol table
 SymbolTable* init_symbol_table() {
@@ -181,8 +200,6 @@ Symbol* lookup_symbol_current_scope(SymbolTable* table, const char* name) {
     return NULL;
 }
 
-
-
 // Analyze AST semantically
 int analyze_semantics(ASTNode* ast) {
     SymbolTable* table = init_symbol_table();
@@ -211,6 +228,8 @@ int check_program(ASTNode* node, SymbolTable* table) {
     
     return result;
 }
+
+
 
 // Check declaration node
 int check_declaration(ASTNode* node, SymbolTable* table) {
@@ -258,7 +277,38 @@ int check_assignment(ASTNode* node, SymbolTable* table) {
     return expr_valid;
 }
 
+// Check a block of statements, handling scope
+int check_block(ASTNode* node, SymbolTable* table){
+    if (node->type != AST_BLOCK || !node) return 0;
 
+    enter_scope(table);
+
+    int valid = 1;
+    ASTNode* stmt = node->left; // Assuming the left child is the list of statements
+
+    while (stmt) {
+        valid &= check_statement(stmt, table);
+        stmt = stmt->right; // Move to next statement in block
+    }
+
+    exit_scope(table);
+    return valid;
+}
+
+// Check a condition (e.g., in if statements)
+int check_condition(ASTNode* node, SymbolTable* table){
+    if (node-> type != AST_IF || node-> type != AST_WHILE || !node) return 0;
+
+    int valid = check_expression(node, table);
+
+    // Ensure the expression is a boolean/integer type
+    if (valid && node->type != AST_BINOP && node->type != AST_IDENTIFIER && node->type != AST_NUMBER) {
+        semantic_error(SEM_ERROR_TYPE_MISMATCH, node->token.lexeme, node->token.line);
+        return 0;
+    }
+
+    return valid;
+}
 
 void semantic_error(SemanticErrorType error, const char* name, int line) {
     printf("Semantic Error at line %d: ", line);
