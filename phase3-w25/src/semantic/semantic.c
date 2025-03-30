@@ -36,6 +36,9 @@ int check_block(ASTNode* node, SymbolTable* table);
 // Check a condition (e.g., in if statements)
 int check_condition(ASTNode* node, SymbolTable* table);
 
+
+int check_program(ASTNode* node, SymbolTable* table);
+
 // Enter a new scope level
 // Increments the current scope level when entering a block (e.g., if, while)
 void enter_scope(SymbolTable* table){
