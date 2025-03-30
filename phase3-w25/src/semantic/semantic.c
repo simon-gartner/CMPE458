@@ -338,19 +338,49 @@ void semantic_error(SemanticErrorType error, const char* name, int line) {
 }
 
 
-int main() {
-    const char* input = "int x;\n"
-                        "x = 42;\n"
-                        "if (x > 0) {\n"
-                        "    int y;\n"
-                        "    y = x + 10;\n"
-                        "    print y;\n"
-                        "}\n";
+int main(int argc, char* argv[]) {
+    FILE* file;
+    char* buffer = NULL;
+    long file_size;
+    const char* filename;
     
-    printf("Analyzing input:\n%s\n\n", input);
+    if (argc < 2) {
+        printf("Error: No input file specified.\n");
+        printf("Usage: %s <filename>\n", argv[0]);
+        return 1;
+    }
     
-    // Lexical analysis and parsing
-    parser_init(input);
+    filename = argv[1];
+    file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("Error: Could not open file %s\n", filename);
+        return 1;
+    }
+    
+    fseek(file, 0, SEEK_END);
+    file_size = ftell(file);
+    rewind(file);
+    
+    // Allocate memory for the buffer
+    buffer = (char*)malloc(file_size + 1);
+    if (buffer == NULL) {
+        printf("Error: Memory allocation failed\n");
+        fclose(file);
+        return 1;
+    }
+    
+    // Read file contents into buffer
+    if (fread(buffer, 1, file_size, file) != file_size) {
+        printf("Error: Failed to read file %s\n", filename);
+        free(buffer);
+        fclose(file);
+        return 1;
+    }
+    
+    buffer[file_size] ='\0';
+    fclose(file);
+    printf("Analyzing input from file %s:\n%s\n\n", filename, buffer);
+    parser_init(buffer);
     ASTNode* ast = parse();
     
     printf("AST created. Performing semantic analysis...\n\n");
@@ -366,6 +396,7 @@ int main() {
     
     // Clean up
     free_ast(ast);
+    free(buffer);
     
     return 0;
 }
