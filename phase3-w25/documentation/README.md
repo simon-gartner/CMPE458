@@ -1,16 +1,15 @@
 ## DOCUMENTATION ##
 
 ## Modifications Made
+From the previous phase, the array data type was introudced. Introducing this data type requires the checking of more semantic errors.
 The semantic analyzer was created to check for the following:
     Variable Declaration Before Use: Ensure all variables are declared before they are used.
     Type Checking: Ensure operations and assignments involve compatible data types.
     Scope Management: Validate that variables are used within their declared scope.
-    Function Argument Validation (if functions are included): Ensure function calls match expected parameters.
-    Array Bound Checking (if applicable): Detect cases where an array index is out of bounds.
+    Array Bound Checking: Detect cases where an array index is out of bounds.
     Use of Uninitialized Variables: Ensure variables are assigned values before use.
     Arithmetic Errors: Detect division by zero and similar runtime errors.
     Loop Condition Validation: Ensure loop conditions are of the correct type (boolean).
-    Return Statement Validation (if functions are included): Validate function return types and return statements.
     Duplicate Declarations: Ensure variables are not declared multiple times within the same scope.
 
 In order to check for these the following functions were implemented:
@@ -30,6 +29,8 @@ In order to check for these the following functions were implemented:
     check_assignment
     check_block
     check_condition
+    check_array_access
+    check_array_declaration
 
 ## Error handling approach
 In order to check for errors the semantic_error function is used.
@@ -44,6 +45,11 @@ Based on what type of error is detected, several different error types can be th
     SEM_ERROR_TYPE_MISMATCH
     SEM_ERROR_UNINITIALIZED_VARIABLE
     SEM_ERROR_INVALID_OPERATION
+    SEM_ERROR_DIVIDE_BY_ZERO
+    SEM_ERROR_INVALID_ARRAY_SIZE
+    SEM_ERROR_NOT_AN_ARRAY
+    SEM_ERROR_ARRAY_INDEX_OUT_OF_BOUNDS
+    SEM_ERROR_ARRAY_ASSIGNMENT
     And a defalt case for unknown errors.
 
 ## Grammar rules
