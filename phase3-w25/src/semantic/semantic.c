@@ -22,6 +22,8 @@ int check_block(ASTNode* node, SymbolTable* table);
 int check_condition(ASTNode* node, SymbolTable* table);
 int check_program(ASTNode* node, SymbolTable* table);
 
+int semantic_error_count = 0;
+
 /* Scope management functions */
 void enter_scope(SymbolTable* table){
     table->current_scope++;
@@ -169,11 +171,13 @@ Symbol* lookup_symbol_current_scope(SymbolTable* table, const char* name) {
 
 /* High-level semantic analysis */
 int analyze_semantics(ASTNode* ast) {
+    semantic_error_count = 0;
     SymbolTable* table = init_symbol_table();
-    int result = check_program(ast, table);
+    check_program(ast, table);
     free_symbol_table(table);
-    return result;
+    return (semantic_error_count == 0);
 }
+
 
 /* Updated check_program function:
    It now iterates over the AST_PROGRAM node's 'next' pointer,
@@ -181,6 +185,7 @@ int analyze_semantics(ASTNode* ast) {
 int check_program(ASTNode* node, SymbolTable* table) {
     if (!node) return 1;
     int result = 1;
+    
     if (node->type == AST_PROGRAM) {
         ASTNode* stmt = node->next;
         while (stmt) {
@@ -190,6 +195,7 @@ int check_program(ASTNode* node, SymbolTable* table) {
     }
     return result;
 }
+
 
 int check_declaration(ASTNode* node, SymbolTable* table) {
     if (node->type != AST_VARDECL) {
@@ -243,6 +249,7 @@ int check_condition(ASTNode* node, SymbolTable* table){
 }
 
 void semantic_error(SemanticErrorType error, const char* name, int line) {
+    semantic_error_count++;
     printf("Semantic Error at line %d: ", line);
     switch (error) {
         case SEM_ERROR_UNDECLARED_VARIABLE:
