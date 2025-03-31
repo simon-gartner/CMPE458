@@ -56,6 +56,28 @@ Nested block statements are not allowed within this grammar.
 
 ## Test cases
 
-The expected output for the input_valid.txt is:
+## The expected output for the input_valid.txt is:
 
-The expected ouput for the input_invalid.txt is:
+Analyzing input from file src/test/input_valid.txt:
+int x;
+int y;
+int result;
+
+x = 42;
+y = 10;
+
+if (x == 42) {
+    x = x - 1;
+    print x;
+}
+
+print x;
+print y;
+print result;
+
+AST created. Performing semantic analysis...
+
+Semantic analysis successful. No errors found.
+
+## The expected ouput for the input_invalid.txt is:
+
