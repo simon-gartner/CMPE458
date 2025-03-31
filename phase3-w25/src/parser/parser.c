@@ -138,6 +138,8 @@ static void synchronize(void) {
            !match(TOKEN_WHILE) &&
            !match(TOKEN_REPEAT) &&
            !match(TOKEN_INT) &&
+           !match(TOKEN_FLOAT) &&
+           !match(TOKEN_CHAR) &&
            !match(TOKEN_PRINT) &&
            !match(TOKEN_EOF)) {
         advance();
@@ -545,6 +547,10 @@ static ASTNode* parse_factorial(void) {
 static ASTNode *parse_statement(void) {
     ASTNode *stmt = NULL;
     if (match(TOKEN_INT)) {
+        stmt = parse_declaration();
+    } else if (match(TOKEN_FLOAT)) {
+        stmt = parse_declaration();
+    } else if (match(TOKEN_CHAR)) {
         stmt = parse_declaration();
     } else if (match(TOKEN_IDENTIFIER)) {
         stmt = parse_assignment();

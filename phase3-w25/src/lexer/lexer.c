@@ -26,6 +26,8 @@ static struct {
 } keywords[] = {
     {"if", TOKEN_IF},
     {"int", TOKEN_INT},
+    {"float", TOKEN_FLOAT},
+    {"char", TOKEN_CHAR},
     {"print", TOKEN_PRINT},
     {"while", TOKEN_WHILE},
     {"repeat", TOKEN_REPEAT},
@@ -84,6 +86,8 @@ void print_token(Token token) {
         case TOKEN_RBRACE:     printf("RBRACE"); break;
         case TOKEN_IF:         printf("IF"); break;
         case TOKEN_INT:        printf("INT"); break;
+        case TOKEN_FLOAT:      printf("FLOAT"); break;
+        case TOKEN_CHAR:       printf("CHAR"); break;
         case TOKEN_PRINT:      printf("PRINT"); break;
         case TOKEN_WHILE:      printf("WHILE"); break;
         case TOKEN_REPEAT:     printf("REPEAT"); break;

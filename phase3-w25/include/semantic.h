@@ -31,6 +31,7 @@ typedef enum {
     SEM_ERROR_NOT_AN_ARRAY,
     SEM_ERROR_ARRAY_INDEX_OUT_OF_BOUNDS,
     SEM_ERROR_ARRAY_ASSIGNMENT,
+    SEM_ERROR_DIVIDE_BY_ZERO,
     SEM_ERROR_SEMANTIC_ERROR  // Generic semantic error
 } SemanticErrorType;
 

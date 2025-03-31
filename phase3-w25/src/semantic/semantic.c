@@ -85,6 +85,13 @@ int check_expression(ASTNode* node, SymbolTable* table){
             break;
         }
         case AST_BINOP: {
+            if (node->token.lexeme == '/'){
+                if (node->right->token.lexeme == '0'){
+                    semantic_error(SEM_ERROR_DIVIDE_BY_ZERO, node->token.lexeme, node->token.line);
+                    valid = 0;
+                    return valid;
+                }
+            }
             int leftValid = check_expression(node->left, table);
             int rightValid = check_expression(node->right, table);
             valid = leftValid && rightValid;
@@ -369,6 +376,9 @@ void semantic_error(SemanticErrorType error, const char* name, int line) {
             break;
         case SEM_ERROR_ARRAY_ASSIGNMENT:
             printf("Cannot assign to array '%s' directly\n", name);
+            break;
+        case SEM_ERROR_DIVIDE_BY_ZERO:
+            printf("Divide by zero error: '%s'\n", name);
             break;
         default:
             printf("Unknown semantic error with '%s'\n", name);

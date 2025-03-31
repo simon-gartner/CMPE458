@@ -14,6 +14,8 @@ typedef enum {
     TOKEN_RBRACE,      // }
     TOKEN_IF,          // if keyword
     TOKEN_INT,         // int keyword
+    TOKEN_FLOAT,       // float keyword
+    TOKEN_CHAR,        // char keyword
     TOKEN_PRINT,       // print keyword
     TOKEN_WHILE,       // while keyword
     TOKEN_REPEAT,      // repeat keyword
