@@ -14,19 +14,12 @@ extern void print_errors(void);
 /* Function prototypes from semantic analysis */
 SymbolTable* init_symbol_table();
 void add_symbol(SymbolTable* table, const char* name, int type, int line);
-
 Symbol* lookup_symbol(SymbolTable* table, const char* name);
-
 int analyze_semantics(ASTNode* ast);
-
 int check_declaration(ASTNode* node, SymbolTable* table);
-
 int check_assignment(ASTNode* node, SymbolTable* table);
-
 int check_block(ASTNode* node, SymbolTable* table);
-
 int check_condition(ASTNode* node, SymbolTable* table);
-
 int check_program(ASTNode* node, SymbolTable* table);
 
 /* Scope management functions */
@@ -182,15 +175,17 @@ int analyze_semantics(ASTNode* ast) {
     return result;
 }
 
+/* Updated check_program function:
+   It now iterates over the AST_PROGRAM node's 'next' pointer,
+   ensuring that all top-level statements are semantically checked. */
 int check_program(ASTNode* node, SymbolTable* table) {
     if (!node) return 1;
     int result = 1;
     if (node->type == AST_PROGRAM) {
-        if (node->left) {
-            result = check_statement(node->left, table) && result;
-        }
-        if (node->right) {
-            result = check_program(node->right, table) && result;
+        ASTNode* stmt = node->next;
+        while (stmt) {
+            result = check_statement(stmt, table) && result;
+            stmt = stmt->next;
         }
     }
     return result;
@@ -315,7 +310,7 @@ int main(int argc, char* argv[]) {
     parser_init(buffer);
     ASTNode* ast = parse();
     
-    // Check for parse errors before semantic analysis, ensuring that parser.c is working
+    /* Check for parse errors before semantic analysis */
     if (error_count > 0) {
         printf("\nParsing failed with %d errors. Semantic analysis aborted.\n", error_count);
         print_errors();
