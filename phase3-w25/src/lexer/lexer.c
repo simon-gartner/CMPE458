@@ -7,12 +7,19 @@
 #include "../../include/tokens.h"
 #include "../../include/lexer.h"
 
-static int current_line = 1;
-static int current_column = 1;
+/* Static lexer state */
+static int current_line;
+static int current_column;
+static char last_token_type;
 
-static char last_token_type = 'x';
+/* Resets lexer state; call this before lexing a new input */
+void lexer_reset(void) {
+    current_line = 1;
+    current_column = 1;
+    last_token_type = 'x';
+}
 
-// Keywords table
+/* Keywords table */
 static struct {
     const char* word;
     TokenType type;
@@ -83,16 +90,16 @@ void print_token(Token token) {
         case TOKEN_EOF:        printf("EOF"); break;
         case TOKEN_LESS:       printf("LESS"); break;
         case TOKEN_GREATER:    printf("GREATER"); break;
-        default:              printf("UNKNOWN");
+        default:               printf("UNKNOWN");
     }
     printf(" | Lexeme: '%s' | Line: %d\n", token.lexeme, token.line);
 }
 
 Token get_next_token(const char* input, int* pos) {
-    // Skip whitespace while tracking position
     char c;
-    while ((c = input[*pos]) != '\0' && (c == ' ' || c == '\n' || c == '\t')) {
-        if (c == '\n') {
+    /* Skip whitespace using isspace() */
+    while (input[*pos] != '\0' && isspace(input[*pos])) {
+        if (input[*pos] == '\n') {
             current_line++;
             current_column = 1;
         } else {
@@ -101,7 +108,6 @@ Token get_next_token(const char* input, int* pos) {
         (*pos)++;
     }
 
-    // Save the starting position of the token
     int token_line = current_line;
     int token_column = current_column;
     
@@ -115,7 +121,7 @@ Token get_next_token(const char* input, int* pos) {
 
     c = input[*pos];
 
-    // Handle numbers
+    /* Handle numbers */
     if (isdigit(c)) {
         int i = 0;
         do {
@@ -123,15 +129,14 @@ Token get_next_token(const char* input, int* pos) {
             (*pos)++;
             current_column++;
             c = input[*pos];
-        } while (isdigit(c) && i < sizeof(token.lexeme) - 1);
-
+        } while (isdigit(c) && i < (int)(sizeof(token.lexeme) - 1));
         token.lexeme[i] = '\0';
         token.type = TOKEN_NUMBER;
         last_token_type = 'x';
         return token;
     }
 
-    // Handle identifiers and keywords
+    /* Handle identifiers and keywords */
     if (isalpha(c) || c == '_') {
         int i = 0;
         do {
@@ -139,11 +144,8 @@ Token get_next_token(const char* input, int* pos) {
             (*pos)++;
             current_column++;
             c = input[*pos];
-        } while ((isalnum(c) || c == '_') && i < sizeof(token.lexeme) - 1);
-
+        } while ((isalnum(c) || c == '_') && i < (int)(sizeof(token.lexeme) - 1));
         token.lexeme[i] = '\0';
-
-        // Check if it's a keyword
         TokenType keyword_type = is_keyword(token.lexeme);
         if (keyword_type) {
             token.type = keyword_type;
@@ -154,7 +156,7 @@ Token get_next_token(const char* input, int* pos) {
         return token;
     }
 
-    // Handle multi-character operators
+    /* Handle multi-character operators */
     if (c == '=' && input[*pos + 1] == '=') {
         token.type = TOKEN_EQUAL_EQUAL;
         strcpy(token.lexeme, "==");
@@ -171,7 +173,7 @@ Token get_next_token(const char* input, int* pos) {
         return token;
     }
 
-    // Handle single-character tokens
+    /* Handle single-character tokens */
     token.lexeme[0] = c;
     token.lexeme[1] = '\0';
     (*pos)++;
@@ -224,7 +226,7 @@ Token get_next_token(const char* input, int* pos) {
             break;
     }
 
-    // Handle newlines right after this token
+    /* If the next character is a newline, update line and column */
     if (input[*pos] == '\n') {
         current_line++;
         current_column = 1;
@@ -233,26 +235,30 @@ Token get_next_token(const char* input, int* pos) {
     return token;
 }
 
+/* Uncomment the main function below for standalone testing
 
-//int main() {
-//    const char *input = 
-//        "int x = 123;\n"
-//        "test_var = 456;\n"
-//        "print x;\n"
-//        "if (y > 10) {\n"
-//        "    @#$ invalid\n"
-//        "    x = ++2;\n"
-//        "}\n"
-//        " x = 3 + 4 * 5;";
-//
-//    printf("Analyzing input:\n%s\n\n", input);
-//    int position = 0;
-//    Token token;
-//
-//    do {
-//        token = get_next_token(input, &position);
-//        print_token(token);
-//    } while (token.type != TOKEN_EOF);
-//
-//    return 0;
-//}
+int main() {
+    const char *input = 
+        "int x = 123;\n"
+        "test_var = 456;\n"
+        "print x;\n"
+        "if (y > 10) {\n"
+        "    @#$ invalid\n"
+        "    x = ++2;\n"
+        "}\n"
+        "x = 3 + 4 * 5;";
+        
+    printf("Analyzing input:\n%s\n\n", input);
+    lexer_reset();  // Reset lexer state before lexing
+    int position = 0;
+    Token token;
+    
+    do {
+        token = get_next_token(input, &position);
+        print_token(token);
+    } while (token.type != TOKEN_EOF);
+    
+    return 0;
+}
+*/
+

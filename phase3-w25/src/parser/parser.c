@@ -6,7 +6,7 @@
 #include "../../include/lexer.h"
 #include "../../include/tokens.h"
 
-/* 
+/*
    Assumption: The ASTNode structure is updated to include a 'next' pointer,
    for example:
 
@@ -30,7 +30,7 @@ static ASTNode* parse_declaration();
 static ASTNode* parse_assignment();
 static ASTNode* parse_statement();
 
-//ADDED NEW PARSING FUNCTIONS IN ADDITION TO OLDER ONES, might break stuff
+/* New expression parsing functions */
 static ASTNode *parse_expression(void);
 static ASTNode *parse_equality(void);
 static ASTNode *parse_comparison(void);
@@ -153,8 +153,7 @@ static void expect(TokenType type) {
     advance();
 }
 
-//Newly added parsing functions, hopefully works
-
+/* Parsing functions */
 
 static ASTNode *parse_declaration(void) {
     ASTNode *node = create_node(AST_VARDECL);
@@ -192,13 +191,11 @@ static ASTNode *parse_declaration(void) {
     return node;
 }
 
-
-
 static ASTNode *parse_assignment(void) {
     ASTNode *node = create_node(AST_ASSIGN);
     node->left = create_node(AST_IDENTIFIER);
     node->left->token = current_token;
-    advance(); // not sure if needed, increments pointer
+    advance();
 
     if (!match(TOKEN_EQUALS)) {
         parse_error(PARSE_ERROR_MISSING_EQUALS, previous_token);
@@ -224,7 +221,6 @@ static ASTNode *parse_assignment(void) {
     return node;
 }
 
-//parsing primary tokens 
 static ASTNode *parse_primary(void) {
     if (match(TOKEN_NUMBER)) {
         ASTNode *node = create_node(AST_NUMBER);
@@ -251,13 +247,12 @@ static ASTNode *parse_primary(void) {
     }
 }
 
-// parsing the multiplication, since the lexer doesent specify operators
 static ASTNode *parse_multiplicative(void) {
     ASTNode *node = parse_primary();
     while (match(TOKEN_OPERATOR) && 
            (strcmp(current_token.lexeme, "*") == 0 || strcmp(current_token.lexeme, "/") == 0)) {
         ASTNode *new_node = create_node(AST_BINOP);
-        new_node->token = current_token;  // operator token ("*" or "/")
+        new_node->token = current_token;
         new_node->left = node;
         advance(); // consume operator
         new_node->right = parse_primary();
@@ -266,13 +261,12 @@ static ASTNode *parse_multiplicative(void) {
     return node;
 }
 
-// parsing for addition and subtraction
 static ASTNode *parse_additive(void) {
     ASTNode *node = parse_multiplicative();
     while (match(TOKEN_OPERATOR) &&
            (strcmp(current_token.lexeme, "+") == 0 || strcmp(current_token.lexeme, "-") == 0)) {
         ASTNode *new_node = create_node(AST_BINOP);
-        new_node->token = current_token;  // operator token ("+" or "-")
+        new_node->token = current_token;
         new_node->left = node;
         advance(); // consume operator
         new_node->right = parse_multiplicative();
@@ -281,12 +275,11 @@ static ASTNode *parse_additive(void) {
     return node;
 }
 
-//parsing for greater than and less than
 static ASTNode *parse_comparison(void) {
     ASTNode *node = parse_additive();
     while (match(TOKEN_LESS) || match(TOKEN_GREATER)) {
         ASTNode *new_node = create_node(AST_BINOP);
-        new_node->token = current_token;  // token is TOKEN_LESS or TOKEN_GREATER
+        new_node->token = current_token;
         new_node->left = node;
         advance(); // consume operator
         new_node->right = parse_additive();
@@ -295,12 +288,11 @@ static ASTNode *parse_comparison(void) {
     return node;
 }
 
-// parsing multiple operators
 static ASTNode *parse_equality(void) {
     ASTNode *node = parse_comparison();
     while (match(TOKEN_EQUAL_EQUAL) || match(TOKEN_NOT_EQUAL)) {
         ASTNode *new_node = create_node(AST_BINOP);
-        new_node->token = current_token;  // token is TOKEN_EQUAL_EQUAL or TOKEN_NOT_EQUAL
+        new_node->token = current_token;
         new_node->left = node;
         advance(); // consume operator
         new_node->right = parse_comparison();
@@ -309,22 +301,21 @@ static ASTNode *parse_equality(void) {
     return node;
 }
 
-
 static ASTNode *parse_expression(void) {
     return parse_equality();
 }
-//if statement parsing fixes
+
 static ASTNode *parse_if_statement(void) {
     ASTNode *node = create_node(AST_IF);
-    advance(); 
+    advance(); // consume 'if'
 
-    if (match(TOKEN_LPAREN)) { //ensuring if has parenthesizes 
-        advance(); 
+    if (match(TOKEN_LPAREN)) {
+        advance(); // consume '('
         node->left = parse_expression();
         if (!match(TOKEN_RPAREN)) {
             parse_error(PARSE_ERROR_MISSING_PARENTHESES, previous_token);
         } else {
-            advance(); 
+            advance(); // consume ')'
         }
     } else {
         parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
@@ -339,10 +330,9 @@ static ASTNode *parse_if_statement(void) {
     return node;
 }
 
-//doing same thing for if with while
 static ASTNode *parse_while_statement(void) {
     ASTNode *node = create_node(AST_WHILE);
-    advance();
+    advance(); // consume 'while'
 
     if (!match(TOKEN_LPAREN)) {
         parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
@@ -369,7 +359,6 @@ static ASTNode *parse_while_statement(void) {
     return node;
 }
 
-// repeat stuff
 static ASTNode *parse_repeat_statement(void) {
     ASTNode *node = create_node(AST_REPEAT);
     advance(); // consume 'repeat'
@@ -404,7 +393,6 @@ static ASTNode *parse_repeat_statement(void) {
     return node;
 }
 
-// parsing for print statements
 static ASTNode* parse_print_statement(void) {
     ASTNode *node = create_node(AST_PRINT);
     advance(); // consume 'print'
@@ -424,10 +412,9 @@ static ASTNode* parse_print_statement(void) {
     return node;
 }
 
-// block statement parsing
 static ASTNode* parse_block_statement(void) {
     ASTNode *node = create_node(AST_BLOCK);
-    /* Use the 'next' pointer for linking statements in a block */
+    /* Link statements using the 'next' pointer for block contents */
     ASTNode **current = &node->next;
     
     if (!match(TOKEN_LBRACE)) {
@@ -454,7 +441,6 @@ static ASTNode* parse_block_statement(void) {
     return node;
 }
 
-//factorial parsing
 static ASTNode* parse_factorial(void) {
     ASTNode *node = create_node(AST_FACTORIAL);
     advance(); // consume 'factorial'
@@ -477,7 +463,6 @@ static ASTNode* parse_factorial(void) {
     return node;
 }
 
-// statement parsing, putting it all together
 static ASTNode *parse_statement(void) {
     ASTNode *stmt = NULL;
     if (match(TOKEN_INT)) {
@@ -501,7 +486,6 @@ static ASTNode *parse_statement(void) {
     return stmt;
 }
 
-// putting together putting together lol
 static ASTNode *parse_program(void) {
     ASTNode *program = create_node(AST_PROGRAM);
     /* Link statements using the 'next' pointer in the program node */
@@ -528,15 +512,14 @@ static ASTNode *parse_program(void) {
 void parser_init(const char *input) {
     source = input;
     position = 0;
+    error_count = 0;  // Reset error count on new input
     advance(); 
 }
 
-// run parse function
 ASTNode *parse(void) {
     return parse_program();
 }
 
-// print parse tree
 void print_ast(ASTNode *node, int level) {
     if (!node) return;
     for (int i = 0; i < level; i++) printf("  ");
@@ -582,14 +565,11 @@ void print_ast(ASTNode *node, int level) {
             printf("Unknown node type\n");
     }
     
-    // Print children one level deeper
     print_ast(node->left, level + 1);
     print_ast(node->right, level + 1);
-    // Print the next statement at the same level
     print_ast(node->next, level);
 }
 
-// freeing mem incase of errors
 void free_ast(ASTNode *node) {
     if (!node) return;
     free_ast(node->left);
@@ -598,50 +578,52 @@ void free_ast(ASTNode *node) {
     free(node);
 }
 
-//changed testing function for operator precidense.
-// int main(int argc, char *argv[]) {
-//     if (argc < 2) {
-//         printf("Usage: %s <textfile>\n", argv[0]);
-//         return 1;
-//     }
+/* Uncomment the main function below for standalone testing
+
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        printf("Usage: %s <textfile>\n", argv[0]);
+        return 1;
+    }
     
-//     FILE *file = fopen(argv[1], "r");
-//     if (!file) {
-//         printf("Error: Could not open file '%s'\n", argv[1]);
-//         return 1;
-//     }
+    FILE *file = fopen(argv[1], "r");
+    if (!file) {
+        printf("Error: Could not open file '%s'\n", argv[1]);
+        return 1;
+    }
     
-//     fseek(file, 0, SEEK_END);
-//     long file_size = ftell(file);
-//     fseek(file, 0, SEEK_SET);
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
     
-//     char *source = malloc(file_size + 1);
-//     if (!source) {
-//         printf("Error: Memory allocation failed\n");
-//         fclose(file);
-//         return 1;
-//     }
+    char *source = malloc(file_size + 1);
+    if (!source) {
+        printf("Error: Memory allocation failed\n");
+        fclose(file);
+        return 1;
+    }
     
-//     size_t bytes_read = fread(source, 1, file_size, file);
-//     source[bytes_read] = '\0';
-//     fclose(file);
+    size_t bytes_read = fread(source, 1, file_size, file);
+    source[bytes_read] = '\0';
+    fclose(file);
     
-//     printf("Parsing file: %s\n", argv[1]);
-//     parser_init(source);
-//     ASTNode *ast = parse();
+    printf("Parsing file: %s\n", argv[1]);
+    parser_init(source);
+    ASTNode *ast = parse();
     
-//     if (error_count > 0) {
-//         printf("\n%d errors found:\n", error_count);
-//         print_errors();
-//     } else {
-//         printf("\nFile parsed successfully!\n");
-//         printf("Abstract Syntax Tree:\n");
-//         print_ast(ast, 0);
-//     }
+    if (error_count > 0) {
+        printf("\n%d errors found:\n", error_count);
+        print_errors();
+    } else {
+        printf("\nFile parsed successfully!\n");
+        printf("Abstract Syntax Tree:\n");
+        print_ast(ast, 0);
+    }
     
-//     free_ast(ast);
-//     free(source);
+    free_ast(ast);
+    free(source);
     
-//     return 0;
-// }
+    return 0;
+}
+*/
 
