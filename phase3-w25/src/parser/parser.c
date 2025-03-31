@@ -46,7 +46,7 @@ static const char *source;
 
 /* Error handling */
 static ParseErrorInfo errors[MAX_ERRORS];
-static int error_count = 0;
+int error_count = 0;
 
 static void parse_error(ParseError error, Token token) {
     if (error_count >= MAX_ERRORS) return;
