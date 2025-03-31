@@ -26,7 +26,10 @@ typedef enum {
     TOKEN_EQUAL_EQUAL, // ==
     TOKEN_NOT_EQUAL,   // !=
 
-    TOKEN_ERROR
+    TOKEN_ERROR,
+
+    TOKEN_LBRACKET,
+    TOKEN_RBRACKET
 } TokenType;
 
 typedef enum {

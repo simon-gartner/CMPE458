@@ -156,46 +156,100 @@ static void expect(TokenType type) {
 /* Parsing functions */
 
 static ASTNode *parse_declaration(void) {
-    ASTNode *node = create_node(AST_VARDECL);
-    node->token = current_token;
+    Token type_token = current_token;
     advance();
-
-    if (match(TOKEN_NUMBER)) {
-        parse_error(PARSE_ERROR_UNEXPECTED_TOKEN, current_token);
-        Token number_token = current_token;
-        advance(); 
-        
-        if (!match(TOKEN_SEMICOLON)) {
-            parse_error(PARSE_ERROR_MISSING_SEMICOLON, number_token);
-        } else {
-            advance();
-        }
-        return node;
-    }
 
     if (!match(TOKEN_IDENTIFIER)) {
         parse_error(PARSE_ERROR_MISSING_IDENTIFIER, previous_token);
         synchronize();
+
+        ASTNode *node = create_node(AST_VARDECL);
+        node->token = type_token;
         return node;
     }
 
-    node->left = create_node(AST_IDENTIFIER);
-    node->left->token = current_token;
+    Token identifier_token = current_token;
     advance();
 
+    // Check for array declaration
+    if (match(TOKEN_LBRACKET)) {
+        advance();
+        
+        if (!match(TOKEN_NUMBER)) {
+            parse_error(PARSE_ERROR_INVALID_EXPRESSION, current_token);
+            synchronize();
+            
+            ASTNode *node = create_node(AST_ARRAYDECL);
+            node->token = type_token;
+            return node;
+        }
+        
+        Token size_token = current_token;
+        advance();
+        
+        if (!match(TOKEN_RBRACKET)) {
+            parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
+        } else {
+            advance();
+        }
+
+        if (!match(TOKEN_SEMICOLON)) {
+            parse_error(PARSE_ERROR_MISSING_SEMICOLON, previous_token);
+        } else {
+            advance();
+        }
+        ASTNode *node = create_node(AST_ARRAYDECL);
+        node->token = type_token;
+        node->left = create_node(AST_IDENTIFIER);
+        node->left->token = identifier_token;
+        node->right = create_node(AST_NUMBER);
+        node->right->token = size_token;
+        
+        return node;
+    }
+    
     if (!match(TOKEN_SEMICOLON)) {
         parse_error(PARSE_ERROR_MISSING_SEMICOLON, previous_token);
     } else {
         advance();
     }
+
+    ASTNode *node = create_node(AST_VARDECL);
+    node->token = type_token;
+    node->left = create_node(AST_IDENTIFIER);
+    node->left->token = identifier_token;
+    
     return node;
 }
 
+
 static ASTNode *parse_assignment(void) {
-    ASTNode *node = create_node(AST_ASSIGN);
-    node->left = create_node(AST_IDENTIFIER);
-    node->left->token = current_token;
+    Token identifier_token = current_token;
     advance();
+    
+    ASTNode *lhs = NULL;
+    
+    if (match(TOKEN_LBRACKET)) {
+        advance(); 
+        ASTNode *index_expr = parse_expression();
+        
+        if (!match(TOKEN_RBRACKET)) {
+            parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
+        } else {
+            advance();
+        }
+        lhs = create_node(AST_ARRAYACCESS);
+        lhs->token = identifier_token;
+        lhs->left = create_node(AST_IDENTIFIER);
+        lhs->left->token = identifier_token;
+        lhs->right = index_expr;
+    } else {
+        lhs = create_node(AST_IDENTIFIER);
+        lhs->token = identifier_token;
+    }
+
+    ASTNode *node = create_node(AST_ASSIGN);
+    node->left = lhs;
 
     if (!match(TOKEN_EQUALS)) {
         parse_error(PARSE_ERROR_MISSING_EQUALS, previous_token);
@@ -203,7 +257,7 @@ static ASTNode *parse_assignment(void) {
         synchronize();
         return NULL;
     }
-    advance(); 
+    advance();
 
     node->right = parse_expression();
     if (!node->right) {
@@ -218,8 +272,10 @@ static ASTNode *parse_assignment(void) {
     } else {
         advance();
     }
+    
     return node;
 }
+
 
 static ASTNode *parse_primary(void) {
     if (match(TOKEN_NUMBER)) {
@@ -228,17 +284,39 @@ static ASTNode *parse_primary(void) {
         advance();
         return node;
     } else if (match(TOKEN_IDENTIFIER)) {
-        ASTNode *node = create_node(AST_IDENTIFIER);
-        node->token = current_token;
+        Token identifier_token = current_token;
         advance();
+        
+        if (match(TOKEN_LBRACKET)) {
+            advance();
+            
+            ASTNode *index_expr = parse_expression();
+            
+            if (!match(TOKEN_RBRACKET)) {
+                parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
+            } else {
+                advance();
+            }
+        
+            ASTNode *node = create_node(AST_ARRAYACCESS);
+            node->token = identifier_token;
+            node->left = create_node(AST_IDENTIFIER);
+            node->left->token = identifier_token;
+            node->right = index_expr;
+            
+            return node;
+        }
+        
+        ASTNode *node = create_node(AST_IDENTIFIER);
+        node->token = identifier_token;
         return node;
     } else if (match(TOKEN_LPAREN)) {
-        advance(); // consume '('
+        advance();
         ASTNode *node = parse_expression();
         if (!match(TOKEN_RPAREN)) {
             parse_error(PARSE_ERROR_MISSING_PARENTHESES, current_token);
         } else {
-            advance(); // consume ')'
+            advance();
         }
         return node;
     } else {
@@ -246,6 +324,7 @@ static ASTNode *parse_primary(void) {
         return NULL;
     }
 }
+
 
 static ASTNode *parse_multiplicative(void) {
     ASTNode *node = parse_primary();
@@ -560,6 +639,12 @@ void print_ast(ASTNode *node, int level) {
             break;
         case AST_FACTORIAL:
             printf("Factorial\n");
+            break;
+        case AST_ARRAYDECL:
+            printf("ArrayDecl: %s\n", node->left ? node->left->token.lexeme : "unknown");
+            break;
+        case AST_ARRAYACCESS:
+            printf("ArrayAccess: %s\n", node->left ? node->left->token.lexeme : "unknown");
             break;
         default:
             printf("Unknown node type\n");

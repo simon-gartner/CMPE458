@@ -9,6 +9,8 @@ typedef struct Symbol {
     int scope_level;         // Scope nesting level
     int line_declared;       // Line where declared
     int is_initialized;      // Has been assigned a value?
+    int is_array;
+    int array_size;   
     struct Symbol* next;     // For linked list implementation
 } Symbol;
 
@@ -25,6 +27,10 @@ typedef enum {
     SEM_ERROR_TYPE_MISMATCH,
     SEM_ERROR_UNINITIALIZED_VARIABLE,
     SEM_ERROR_INVALID_OPERATION,
+    SEM_ERROR_INVALID_ARRAY_SIZE,
+    SEM_ERROR_NOT_AN_ARRAY,
+    SEM_ERROR_ARRAY_INDEX_OUT_OF_BOUNDS,
+    SEM_ERROR_ARRAY_ASSIGNMENT,
     SEM_ERROR_SEMANTIC_ERROR  // Generic semantic error
 } SemanticErrorType;
 

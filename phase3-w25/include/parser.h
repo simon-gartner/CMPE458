@@ -20,7 +20,8 @@ typedef enum {
     AST_BLOCK,          // Code block?
     AST_BINOP,          // Binary operator
     AST_FACTORIAL,      // Factorial function
-    // TODO: Add more node types as needed
+    AST_ARRAYDECL,
+    AST_ARRAYACCESS
 } ASTNodeType;
 
 typedef enum {
@@ -34,7 +35,9 @@ typedef enum {
     PARSE_ERROR_MISSING_CONDITION_STATEMENT,
     PARSE_ERROR_MISSING_BLOCK_BRACES,
     PARSE_ERROR_INVALID_OPERATOR,
-    PARSE_ERROR_FUNCTION_CALL
+    PARSE_ERROR_FUNCTION_CALL,
+    PARSE_ERROR_INVALID_ARRAY_SIZE,
+    PARSE_ERROR_INVALID_ARRAY_INDEX
 } ParseError;
 
 // AST Node structure

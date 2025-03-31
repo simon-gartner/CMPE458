@@ -13,7 +13,7 @@ extern void print_errors(void);
 
 /* Function prototypes from semantic analysis */
 SymbolTable* init_symbol_table();
-void add_symbol(SymbolTable* table, const char* name, int type, int line);
+Symbol* add_symbol(SymbolTable* table, const char* name, int type, int line);
 Symbol* lookup_symbol(SymbolTable* table, const char* name);
 int analyze_semantics(ASTNode* ast);
 int check_declaration(ASTNode* node, SymbolTable* table);
@@ -21,6 +21,8 @@ int check_assignment(ASTNode* node, SymbolTable* table);
 int check_block(ASTNode* node, SymbolTable* table);
 int check_condition(ASTNode* node, SymbolTable* table);
 int check_program(ASTNode* node, SymbolTable* table);
+int check_array_access(ASTNode* node, SymbolTable* table);
+int check_array_declaration(ASTNode* node, SymbolTable* table);
 
 int semantic_error_count = 0;
 
@@ -96,6 +98,8 @@ int check_expression(ASTNode* node, SymbolTable* table){
                 valid = check_expression(node->left, table);
             }
             break;
+        case AST_ARRAYACCESS:
+            return check_array_access(node, table);
         default:
             valid = check_expression(node->left, table) && check_expression(node->right, table);
             break;
@@ -108,6 +112,8 @@ int check_statement(ASTNode* node, SymbolTable* table) {
     switch (node->type) {
         case AST_VARDECL:
             return check_declaration(node, table);
+        case AST_ARRAYDECL:
+            return check_array_declaration(node, table);
         case AST_ASSIGN:
             return check_assignment(node, table);
         case AST_IF:
@@ -134,7 +140,7 @@ SymbolTable* init_symbol_table() {
     return table;
 }
 
-void add_symbol(SymbolTable* table, const char* name, int type, int line) {
+Symbol* add_symbol(SymbolTable* table, const char* name, int type, int line) {
     Symbol* symbol = malloc(sizeof(Symbol));
     if (symbol) {
         strcpy(symbol->name, name);
@@ -142,10 +148,14 @@ void add_symbol(SymbolTable* table, const char* name, int type, int line) {
         symbol->scope_level = table->current_scope;
         symbol->line_declared = line;
         symbol->is_initialized = 0;
+        symbol->is_array = 0;
+        symbol->array_size = 0;
         symbol->next = table->head;
         table->head = symbol;
     }
+    return symbol;
 }
+
 
 Symbol* lookup_symbol(SymbolTable* table, const char* name) {
     Symbol* current = table->head;
@@ -211,22 +221,103 @@ int check_declaration(ASTNode* node, SymbolTable* table) {
     return 1;
 }
 
-int check_assignment(ASTNode* node, SymbolTable* table) {
-    if (node->type != AST_ASSIGN || !node->left || !node->right) {
+int check_array_declaration(ASTNode* node, SymbolTable* table) {
+    if (node->type != AST_ARRAYDECL || !node->left || !node->right) {
         return 0;
     }
+    
+    const char* name = node->left->token.lexeme;
+    
+    Symbol* existing = lookup_symbol_current_scope(table, name);
+    if (existing) {
+        semantic_error(SEM_ERROR_REDECLARED_VARIABLE, name, node->left->token.line);
+        return 0;
+    }
+    
+    if (node->right->type != AST_NUMBER) {
+        semantic_error(SEM_ERROR_INVALID_ARRAY_SIZE, name, node->left->token.line);
+        return 0;
+    }
+    
+    int size = atoi(node->right->token.lexeme);
+    if (size <= 0) {
+        semantic_error(SEM_ERROR_INVALID_ARRAY_SIZE, name, node->right->token.line);
+        return 0;
+    }
+    Symbol* symbol = add_symbol(table, name, TOKEN_INT, node->left->token.line);
+    symbol->is_array = 1;
+    symbol->array_size = size;
+    return 1;
+}
+
+int check_array_access(ASTNode* node, SymbolTable* table) {
+    if (node->type != AST_ARRAYACCESS || !node->left) {
+        return 0;
+    }
+    
     const char* name = node->left->token.lexeme;
     Symbol* symbol = lookup_symbol(table, name);
+    
     if (!symbol) {
         semantic_error(SEM_ERROR_UNDECLARED_VARIABLE, name, node->left->token.line);
         return 0;
     }
-    int expr_valid = check_expression(node->right, table);
-    if (expr_valid) {
-        symbol->is_initialized = 1;
+    
+    if (!symbol->is_array) {
+        semantic_error(SEM_ERROR_NOT_AN_ARRAY, name, node->left->token.line);
+        return 0;
     }
-    return expr_valid;
+    
+    // Check index expression
+    int index_valid = check_expression(node->right, table);
+    
+    // Check bounds if index is a constant
+    if (index_valid && node->right->type == AST_NUMBER) {
+        int index = atoi(node->right->token.lexeme);
+        if (index < 0 || index >= symbol->array_size) {
+            semantic_error(SEM_ERROR_ARRAY_INDEX_OUT_OF_BOUNDS, name, node->right->token.line);
+            return 0;
+        }
+    }
+    
+    return index_valid;
 }
+
+
+int check_assignment(ASTNode* node, SymbolTable* table) {
+    if (node->type != AST_ASSIGN || !node->left || !node->right) {
+        return 0;
+    }
+    
+    if (node->left->type == AST_IDENTIFIER) {
+        const char* name = node->left->token.lexeme;
+        Symbol* symbol = lookup_symbol(table, name);
+        
+        if (!symbol) {
+            semantic_error(SEM_ERROR_UNDECLARED_VARIABLE, name, node->left->token.line);
+            return 0;
+        }
+        
+        if (symbol->is_array) {
+            semantic_error(SEM_ERROR_ARRAY_ASSIGNMENT, name, node->left->token.line);
+            return 0;
+        }
+        
+        int expr_valid = check_expression(node->right, table);
+        if (expr_valid) {
+            symbol->is_initialized = 1;
+        }
+        return expr_valid;
+    } 
+    else if (node->left->type == AST_ARRAYACCESS) {
+        int lhs_valid = check_array_access(node->left, table);
+        int rhs_valid = check_expression(node->right, table);
+        return lhs_valid && rhs_valid;
+    }
+    
+    return 0;
+}
+
 
 int check_block(ASTNode* node, SymbolTable* table){
     if (!node || node->type != AST_BLOCK) return 0;
@@ -266,6 +357,18 @@ void semantic_error(SemanticErrorType error, const char* name, int line) {
             break;
         case SEM_ERROR_INVALID_OPERATION:
             printf("Invalid operation involving '%s'\n", name);
+            break;
+        case SEM_ERROR_INVALID_ARRAY_SIZE:
+            printf("Invalid array size for array '%s'\n", name);
+            break;
+        case SEM_ERROR_NOT_AN_ARRAY:
+            printf("Variable '%s' is not an array\n", name);
+            break;
+        case SEM_ERROR_ARRAY_INDEX_OUT_OF_BOUNDS:
+            printf("Array index out of bounds for array '%s'\n", name);
+            break;
+        case SEM_ERROR_ARRAY_ASSIGNMENT:
+            printf("Cannot assign to array '%s' directly\n", name);
             break;
         default:
             printf("Unknown semantic error with '%s'\n", name);

@@ -90,6 +90,8 @@ void print_token(Token token) {
         case TOKEN_EOF:        printf("EOF"); break;
         case TOKEN_LESS:       printf("LESS"); break;
         case TOKEN_GREATER:    printf("GREATER"); break;
+        case TOKEN_LBRACKET:   printf("LBRACKET"); break;
+        case TOKEN_RBRACKET:   printf("RBRACKET"); break;
         default:               printf("UNKNOWN");
     }
     printf(" | Lexeme: '%s' | Line: %d\n", token.lexeme, token.line);
@@ -218,6 +220,14 @@ Token get_next_token(const char* input, int* pos) {
             break;
         case '}':
             token.type = TOKEN_RBRACE;
+            last_token_type = 'x';
+            break;
+        case '[':
+            token.type = TOKEN_LBRACKET;
+            last_token_type = 'x';
+            break;
+        case ']':
+            token.type = TOKEN_RBRACKET;
             last_token_type = 'x';
             break;
         default:
