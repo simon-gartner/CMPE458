@@ -198,16 +198,16 @@ int check_program(ASTNode* node, SymbolTable* table) {
 
 
 int check_declaration(ASTNode* node, SymbolTable* table) {
-    if (node->type != AST_VARDECL) {
+    if (node->type != AST_VARDECL || !node->left) {
         return 0;
     }
-    const char* name = node->token.lexeme;
+    const char* name = node->left->token.lexeme;
     Symbol* existing = lookup_symbol_current_scope(table, name);
     if (existing) {
-        semantic_error(SEM_ERROR_REDECLARED_VARIABLE, name, node->token.line);
+        semantic_error(SEM_ERROR_REDECLARED_VARIABLE, name, node->left->token.line);
         return 0;
     }
-    add_symbol(table, name, TOKEN_INT, node->token.line);
+    add_symbol(table, name, TOKEN_INT, node->left->token.line);
     return 1;
 }
 
@@ -218,7 +218,7 @@ int check_assignment(ASTNode* node, SymbolTable* table) {
     const char* name = node->left->token.lexeme;
     Symbol* symbol = lookup_symbol(table, name);
     if (!symbol) {
-        semantic_error(SEM_ERROR_UNDECLARED_VARIABLE, name, node->token.line);
+        semantic_error(SEM_ERROR_UNDECLARED_VARIABLE, name, node->left->token.line);
         return 0;
     }
     int expr_valid = check_expression(node->right, table);
