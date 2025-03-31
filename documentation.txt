@@ -64,3 +64,32 @@ Token: STRING     | Lexeme: HELLO WORLD     | Line: 5
 Token: PUNC       | Lexeme: )               | Line: 5
 Token: PUNC       | Lexeme: }               | Line: 5
 Token: EOF        | Lexeme: EOF             | Line: 6
+
+
+New error signals or handling mechanisms: The parser now dynamically collects syntax errors in an error array and 
+reports them with precise line and column numbers. Semantic analysis is aborted if any syntax errors are detected, 
+ensuring that only valid input proceeds to later stages. This improvement provides clear, actionable feedback to 
+facilitate robust testing and debugging. Here is an example output given an invalid input:
+Analyzing input from file ..\test\input_invalid.txt:
+int x
+int 49;
+int ;
+
+print;
+
+if (x == 42 {
+    print x;
+}
+
+
+Parsing failed with 5 errors. Semantic analysis aborted.
+Error 0:4: Missing semicolon after 'x'
+Error 1:5: Unexpected '49'
+Error 2:1: Missing identifier after 'int'
+Error 4:1: Missing identifier after 'print'
+Error 6:10: Missing parentheses for '42'
+
+
+
+
+

@@ -14,12 +14,19 @@ extern void print_errors(void);
 /* Function prototypes from semantic analysis */
 SymbolTable* init_symbol_table();
 void add_symbol(SymbolTable* table, const char* name, int type, int line);
+
 Symbol* lookup_symbol(SymbolTable* table, const char* name);
+
 int analyze_semantics(ASTNode* ast);
+
 int check_declaration(ASTNode* node, SymbolTable* table);
+
 int check_assignment(ASTNode* node, SymbolTable* table);
+
 int check_block(ASTNode* node, SymbolTable* table);
+
 int check_condition(ASTNode* node, SymbolTable* table);
+
 int check_program(ASTNode* node, SymbolTable* table);
 
 /* Scope management functions */
@@ -308,7 +315,7 @@ int main(int argc, char* argv[]) {
     parser_init(buffer);
     ASTNode* ast = parse();
     
-    /* Check for parse errors before semantic analysis */
+    // Check for parse errors before semantic analysis, ensuring that parser.c is working
     if (error_count > 0) {
         printf("\nParsing failed with %d errors. Semantic analysis aborted.\n", error_count);
         print_errors();
